@@ -1,9 +1,10 @@
-FROM node:20-alpine AS deps
+FROM node:20-slim AS deps
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -12,9 +13,9 @@ RUN npx prisma generate
 COPY . .
 RUN npm run build
 
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
+RUN apt-get update && apt-get install -y openssl nmap && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-RUN apk add --no-cache nmap
 ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
