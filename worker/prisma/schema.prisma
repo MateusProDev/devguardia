@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String        @id @default(cuid())
+  firebaseUid     String        @unique
+  email           String        @unique
+  displayName     String?
+  acceptedTerms   Boolean       @default(false)
+  acceptedTermsAt DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  scans        Scan[]
+  payments     Payment[]
+  subscription Subscription?
+
+  @@index([firebaseUid])
+  @@index([email])
+}
+
+enum ScanStatus {
+  PENDING
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model Scan {
+  id        String     @id @default(cuid())
+  userId    String
+  url       String
+  status    ScanStatus @default(PENDING)
+  score     Int?
+  isPremium Boolean    @default(false)
+  errorMsg  String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vulnerabilities Vulnerability[]
+  payment         Payment?
+
+  @@index([userId])
+  @@index([status])
+}
+
+enum Severity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFO
+}
+
+model Vulnerability {
+  id            String   @id @default(cuid())
+  scanId        String
+  title         String
+  severity      Severity
+  description   String
+  solution      String
+  aiExplanation String?
+  aiCodeFix     String?
+  isPublic      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  scan Scan @relation(fields: [scanId], references: [id], onDelete: Cascade)
+
+  @@index([scanId])
+  @@index([severity])
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum PaymentType {
+  SINGLE_SCAN
+  SUBSCRIPTION
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  userId        String
+  scanId        String?       @unique
+  mercadoPagoId String?       @unique
+  preferenceId  String?
+  status        PaymentStatus @default(PENDING)
+  type          PaymentType
+  amount        Int
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scan Scan? @relation(fields: [scanId], references: [id])
+
+  @@index([userId])
+  @@index([mercadoPagoId])
+}
+
+model Subscription {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  active    Boolean  @default(true)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

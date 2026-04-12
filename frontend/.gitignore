@@ -1,0 +1,15 @@
+# dependencies
+node_modules/
+.next/
+out/
+
+# env files (NUNCA commitar credenciais)
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+
+# misc
+*.tsbuildinfo
+next-env.d.ts
