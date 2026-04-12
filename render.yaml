@@ -1,0 +1,52 @@
+databases:
+  - name: devguard-db
+    plan: free
+    databaseName: devguard_db
+    user: devguard
+
+services:
+  - type: web
+    name: devguard-backend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./docker/backend.Dockerfile
+    dockerContext: ./backend
+    envVars:
+      - key: PORT
+        value: 3001
+      - key: DATABASE_URL
+        fromDatabase:
+          name: devguard-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: MERCADOPAGO_ACCESS_TOKEN
+        sync: false
+
+  - type: web
+    name: devguard-worker
+    runtime: docker
+    plan: free
+    dockerfilePath: ./docker/worker.Dockerfile
+    dockerContext: ./worker
+    envVars:
+      - key: PORT
+        value: 3002
+      - key: DATABASE_URL
+        fromDatabase:
+          name: devguard-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false

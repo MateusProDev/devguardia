@@ -1,13 +1,26 @@
 import { Worker } from 'bullmq';
 import { PrismaClient } from '@prisma/client';
+import { createServer } from 'http';
 import { ScanProcessor } from './processors/scan.processor';
 
 const prisma = new PrismaClient();
 
-const connection = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-};
+function getRedisConnection() {
+  const url = process.env.REDIS_URL;
+  if (url) {
+    return {
+      url,
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+      ...(url.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {}),
+    } as any;
+  }
+  return {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379'),
+    maxRetriesPerRequest: null,
+  };
+}
 
 const scanProcessor = new ScanProcessor(prisma);
 
@@ -20,7 +33,7 @@ const worker = new Worker(
     }
   },
   {
-    connection,
+    connection: getRedisConnection(),
     concurrency: 3,
   },
 );
@@ -33,10 +46,24 @@ worker.on('failed', (job, err) => {
   console.error(`Job ${job?.id} failed: ${err.message}`);
 });
 
-console.log('DevGuard AI Worker started');
+// Health check HTTP server (required for Render free tier)
+const port = parseInt(process.env.PORT || '3002');
+const server = createServer((req, res) => {
+  if (req.url === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'ok', service: 'worker' }));
+  } else {
+    res.writeHead(404);
+    res.end();
+  }
+});
+server.listen(port, () => {
+  console.log(`DevGuard AI Worker started (health check on port ${port})`);
+});
 
 process.on('SIGTERM', async () => {
   await worker.close();
+  server.close();
   await prisma.$disconnect();
   process.exit(0);
 });

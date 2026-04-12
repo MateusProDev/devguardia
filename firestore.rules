@@ -1,0 +1,32 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Bloqueia todo acesso por padrão
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Perfil do usuário - apenas o próprio pode ler/escrever
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
+    // Scans - usuário autenticado pode ler apenas os seus
+    match /scans/{scanId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Reports - usuário autenticado pode ler apenas os seus
+    match /reports/{reportId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+  }
+}

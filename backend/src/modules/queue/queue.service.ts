@@ -1,16 +1,30 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Queue } from 'bullmq';
 
+function getRedisConnection() {
+  const url = process.env.REDIS_URL;
+  if (url) {
+    return {
+      url,
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+      ...(url.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {}),
+    } as any;
+  }
+  return {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379'),
+    maxRetriesPerRequest: null,
+  };
+}
+
 @Injectable()
 export class QueueService implements OnModuleInit {
   private scanQueue: Queue;
 
   onModuleInit() {
     this.scanQueue = new Queue('scan-queue', {
-      connection: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-      },
+      connection: getRedisConnection(),
     });
   }
 
