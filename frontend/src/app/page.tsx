@@ -68,6 +68,7 @@ export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
+    if (!auth) return;
     const unsub = onAuthStateChanged(auth, (user: import('firebase/auth').User | null) => {
       if (user) router.push('/dashboard');
     });

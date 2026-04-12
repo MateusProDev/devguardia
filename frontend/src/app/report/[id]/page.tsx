@@ -60,6 +60,7 @@ export default function ReportPage() {
   }, [scanId]);
 
   useEffect(() => {
+    if (!auth) return;
     const unsub = onAuthStateChanged(auth, (u: import('firebase/auth').User | null) => {
       if (!u) router.push('/');
       else fetchReport();

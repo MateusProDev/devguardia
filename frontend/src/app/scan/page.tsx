@@ -32,6 +32,7 @@ function ScanPageContent() {
   }, [searchParams]);
 
   useEffect(() => {
+    if (!auth) return;
     const unsub = onAuthStateChanged(auth, (u: import('firebase/auth').User | null) => {
       if (!u) router.push('/');
       else setAuthChecked(true);
