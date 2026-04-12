@@ -1,21 +1,21 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Queue } from 'bullmq';
+import Redis from 'ioredis';
 
-function getRedisConnection() {
+function getRedisConnection(): Redis {
   const url = process.env.REDIS_URL;
   if (url) {
-    return {
-      url,
+    return new Redis(url, {
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
       ...(url.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {}),
-    } as any;
+    });
   }
-  return {
+  return new Redis({
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379'),
     maxRetriesPerRequest: null,
-  };
+  });
 }
 
 @Injectable()

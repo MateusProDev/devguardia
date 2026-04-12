@@ -1,25 +1,25 @@
 import { Worker } from 'bullmq';
 import { PrismaClient } from '@prisma/client';
 import { createServer } from 'http';
+import Redis from 'ioredis';
 import { ScanProcessor } from './processors/scan.processor';
 
 const prisma = new PrismaClient();
 
-function getRedisConnection() {
+function getRedisConnection(): Redis {
   const url = process.env.REDIS_URL;
   if (url) {
-    return {
-      url,
+    return new Redis(url, {
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
       ...(url.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {}),
-    } as any;
+    });
   }
-  return {
+  return new Redis({
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379'),
     maxRetriesPerRequest: null,
-  };
+  });
 }
 
 const scanProcessor = new ScanProcessor(prisma);
