@@ -24,6 +24,8 @@ function getRedisConnection(): Redis {
 
 const scanProcessor = new ScanProcessor(prisma);
 
+const redisConnection = getRedisConnection();
+
 const worker = new Worker(
   'scan-queue',
   async (job) => {
@@ -33,8 +35,8 @@ const worker = new Worker(
     }
   },
   {
-    connection: getRedisConnection(),
-    concurrency: 3,
+    connection: redisConnection,
+    concurrency: 2,
   },
 );
 
@@ -64,6 +66,7 @@ server.listen(port, () => {
 process.on('SIGTERM', async () => {
   await worker.close();
   server.close();
+  await redisConnection.quit();
   await prisma.$disconnect();
   process.exit(0);
 });

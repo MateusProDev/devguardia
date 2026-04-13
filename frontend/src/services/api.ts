@@ -10,7 +10,10 @@ async function authFetch(path: string, options: RequestInit = {}) {
   };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE_URL}/api${path}`, { ...options, headers });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+  const res = await fetch(`${BASE_URL}/api${path}`, { ...options, headers, signal: controller.signal });
+  clearTimeout(timeout);
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: 'Erro desconhecido' }));

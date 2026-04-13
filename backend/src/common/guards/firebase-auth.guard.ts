@@ -10,6 +10,9 @@ import { UsersService } from '../../modules/users/users.service';
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
+  private userCache = new Map<string, { user: any; expiresAt: number }>();
+  private readonly CACHE_TTL = 5 * 60 * 1000;
+
   constructor(
     private readonly firebaseAdmin: FirebaseAdminService,
     private readonly usersService: UsersService,
@@ -27,11 +30,19 @@ export class FirebaseAuthGuard implements CanActivate {
 
     try {
       const decoded = await this.firebaseAdmin.verifyToken(token);
+
+      const cached = this.userCache.get(decoded.uid);
+      if (cached && cached.expiresAt > Date.now()) {
+        request.user = cached.user;
+        return true;
+      }
+
       const user = await this.usersService.findOrCreate({
         firebaseUid: decoded.uid,
         email: decoded.email || '',
         displayName: decoded.name || null,
       });
+      this.userCache.set(decoded.uid, { user, expiresAt: Date.now() + this.CACHE_TTL });
       request.user = user;
       return true;
     } catch {

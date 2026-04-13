@@ -65,14 +65,18 @@ export class PaymentsService {
       auto_return: 'approved',
     };
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
     const response = await fetch(`${API_BASE}/checkout/preferences`, {
       method: 'POST',
+      signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${MERCADOPAGO_ACCESS_TOKEN}`,
       },
       body: JSON.stringify(body),
     });
+    clearTimeout(timeout);
 
     if (!response.ok) {
       const err = await response.text();

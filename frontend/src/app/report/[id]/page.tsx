@@ -70,8 +70,15 @@ export default function ReportPage() {
 
   useEffect(() => {
     if (!polling) return;
-    const interval = setInterval(fetchReport, 4000);
-    return () => clearInterval(interval);
+    let delay = 3000;
+    let timeout: NodeJS.Timeout;
+    const poll = () => {
+      fetchReport();
+      delay = Math.min(delay * 1.5, 10000);
+      timeout = setTimeout(poll, delay);
+    };
+    timeout = setTimeout(poll, delay);
+    return () => clearTimeout(timeout);
   }, [polling, fetchReport]);
 
   if (loading) {

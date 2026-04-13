@@ -34,8 +34,11 @@ Responda em JSON com os campos:
 - explanation: explicação clara e objetiva (2-3 frases, em português)
 - codeFix: exemplo de código de correção (string com código, ou null se não aplicável)`;
 
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
+        signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${this.apiKey}`,
@@ -48,6 +51,7 @@ Responda em JSON com os campos:
           max_tokens: 500,
         }),
       });
+      clearTimeout(timeout);
 
       if (!response.ok) {
         this.logger.warn(`OpenAI API error: ${response.status}`);

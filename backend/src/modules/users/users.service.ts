@@ -38,12 +38,18 @@ export class UsersService {
     });
   }
 
+  private subCache = new Map<string, { active: boolean; expiresAt: number }>();
+
   async hasActiveSubscription(userId: string): Promise<boolean> {
+    const cached = this.subCache.get(userId);
+    if (cached && cached.expiresAt > Date.now()) return cached.active;
+
     const sub = await this.prisma.subscription.findUnique({
       where: { userId },
     });
-    if (!sub) return false;
-    return sub.active && sub.expiresAt > new Date();
+    const active = sub ? sub.active && sub.expiresAt > new Date() : false;
+    this.subCache.set(userId, { active, expiresAt: Date.now() + 180_000 });
+    return active;
   }
 
   async getScansToday(userId: string): Promise<number> {

@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import Redis from 'ioredis';
 
@@ -19,13 +19,20 @@ function getRedisConnection(): Redis {
 }
 
 @Injectable()
-export class QueueService implements OnModuleInit {
-  private scanQueue: Queue;
+export class QueueService implements OnModuleInit, OnModuleDestroy {
+  private scanQueue!: Queue;
+  private redisConnection!: Redis;
 
   onModuleInit() {
+    this.redisConnection = getRedisConnection();
     this.scanQueue = new Queue('scan-queue', {
-      connection: getRedisConnection(),
+      connection: this.redisConnection,
     });
+  }
+
+  async onModuleDestroy() {
+    await this.scanQueue?.close();
+    await this.redisConnection?.quit();
   }
 
   async addScanJob(scanId: string) {
