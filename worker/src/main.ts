@@ -12,7 +12,7 @@ function getRedisConnection(): Redis {
     return new Redis(url, {
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
-      ...(url.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {}),
+      ...(url.startsWith('rediss://') ? { tls: { rejectUnauthorized: true } } : {}),
     });
   }
   return new Redis({

@@ -101,15 +101,19 @@ export class PaymentsService {
   async handleWebhook(body: any, signature: string) {
     const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET || '';
 
-    if (secret) {
-      const hash = crypto
-        .createHmac('sha256', secret)
-        .update(JSON.stringify(body))
-        .digest('hex');
-      if (hash !== signature) {
-        this.logger.warn('Invalid webhook signature');
-        return { received: false };
-      }
+    if (!secret) {
+      this.logger.error('MERCADOPAGO_WEBHOOK_SECRET not configured — rejecting webhook');
+      throw new BadRequestException('Webhook authentication not configured');
+    }
+
+    const hash = crypto
+      .createHmac('sha256', secret)
+      .update(JSON.stringify(body))
+      .digest('hex');
+    const sig = signature || '';
+    if (hash.length !== sig.length || !crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(sig))) {
+      this.logger.warn('Invalid webhook signature');
+      return { received: false };
     }
 
     const { type, data } = body;
@@ -122,9 +126,13 @@ export class PaymentsService {
   }
 
   private async processPaymentNotification(mpPaymentId: string) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
     const response = await fetch(`${API_BASE}/v1/payments/${mpPaymentId}`, {
       headers: { Authorization: `Bearer ${MERCADOPAGO_ACCESS_TOKEN}` },
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     if (!response.ok) {
       this.logger.error(`Failed to fetch MP payment ${mpPaymentId}`);

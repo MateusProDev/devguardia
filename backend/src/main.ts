@@ -4,11 +4,19 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  // Validate required environment variables
+  const required = ['DATABASE_URL', 'REDIS_URL', 'FIREBASE_PROJECT_ID', 'FIREBASE_CLIENT_EMAIL', 'FIREBASE_PRIVATE_KEY'];
+  const missing = required.filter((v) => !process.env[v]);
+  if (missing.length > 0 && process.env.NODE_ENV === 'production') {
+    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
+
   const app = await NestFactory.create(AppModule);
 
   app.use(
     helmet({
-      crossOriginOpenerPolicy: false,
+      crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+      hsts: { maxAge: 63072000, includeSubDomains: true, preload: true },
     }),
   );
 
@@ -28,6 +36,9 @@ async function bootstrap() {
       }
     },
     credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 200,
   });
 
   app.useGlobalPipes(

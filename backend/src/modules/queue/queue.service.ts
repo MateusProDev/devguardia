@@ -8,12 +8,16 @@ function getRedisConnection(): Redis {
     return new Redis(url, {
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
-      ...(url.startsWith('rediss://') ? { tls: { rejectUnauthorized: false } } : {}),
+      ...(url.startsWith('rediss://') ? { tls: { rejectUnauthorized: true } } : {}),
     });
   }
+  const host = process.env.REDIS_HOST || 'localhost';
+  const port = parseInt(process.env.REDIS_PORT || '6379');
+  const password = process.env.REDIS_PASSWORD || undefined;
   return new Redis({
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379'),
+    host,
+    port,
+    password,
     maxRetriesPerRequest: null,
   });
 }

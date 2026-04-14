@@ -39,6 +39,7 @@ export class UsersService {
   }
 
   private subCache = new Map<string, { active: boolean; expiresAt: number }>();
+  private readonly SUB_CACHE_TTL = 30_000;
 
   async hasActiveSubscription(userId: string): Promise<boolean> {
     const cached = this.subCache.get(userId);
@@ -48,7 +49,16 @@ export class UsersService {
       where: { userId },
     });
     const active = sub ? sub.active && sub.expiresAt > new Date() : false;
-    this.subCache.set(userId, { active, expiresAt: Date.now() + 180_000 });
+    this.subCache.set(userId, { active, expiresAt: Date.now() + this.SUB_CACHE_TTL });
+
+    // Periodic cleanup
+    if (this.subCache.size > 2000) {
+      const now = Date.now();
+      for (const [k, v] of this.subCache) {
+        if (v.expiresAt < now) this.subCache.delete(k);
+      }
+    }
+
     return active;
   }
 

@@ -1,5 +1,6 @@
 const ALLOWED_PROTOCOLS = ['http:', 'https:'];
 const BLOCKED_TLDS = ['.local', '.internal', '.corp', '.home', '.lan'];
+const BLOCKED_HOSTNAMES = ['metadata.google.internal', '169.254.169.254', 'metadata.internal'];
 
 export function isValidScanUrl(url: string): boolean {
   try {
@@ -9,14 +10,33 @@ export function isValidScanUrl(url: string): boolean {
       return false;
     }
 
+    // Block credentials in URL
+    if (parsed.username || parsed.password) {
+      return false;
+    }
+
     const hostname = parsed.hostname.toLowerCase();
 
     if (BLOCKED_TLDS.some((tld) => hostname.endsWith(tld))) {
       return false;
     }
 
+    if (BLOCKED_HOSTNAMES.includes(hostname)) {
+      return false;
+    }
+
     if (hostname === 'localhost') return false;
     if (!hostname.includes('.') && !/^\[/.test(hostname)) return false;
+
+    // Block numeric IPs (IPv4)
+    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(hostname)) {
+      return false;
+    }
+
+    // Block IPv6
+    if (/^\[/.test(hostname)) {
+      return false;
+    }
 
     return true;
   } catch {
