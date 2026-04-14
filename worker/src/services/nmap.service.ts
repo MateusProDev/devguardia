@@ -10,24 +10,35 @@ interface VulnRaw {
   solution: string;
 }
 
-const ALLOWED_FLAGS = ['-sV', '--open', '-T2', '--host-timeout', '30s', '-p', '80,443,8080,8443,22,21,3306,5432,6379,27017'];
+const ALLOWED_FLAGS = ['-sT', '--open', '-T4', '--host-timeout', '10s', '--max-retries', '1', '-p', '21,22,80,443,3306,5432,6379,8080,8443,27017'];
 
 export class NmapService {
   async scan(hostname: string): Promise<VulnRaw[]> {
     const sanitizedHost = this.sanitizeHostname(hostname);
-    if (!sanitizedHost) return [];
+    if (!sanitizedHost) {
+      console.warn(`[NMAP] Invalid hostname rejected: ${hostname}`);
+      return [];
+    }
 
     try {
-      const { stdout } = await execFileAsync('nmap', [
+      console.log(`[NMAP] Starting scan for ${sanitizedHost} with flags: ${ALLOWED_FLAGS.join(' ')}`);
+      const { stdout, stderr } = await execFileAsync('nmap', [
         ...ALLOWED_FLAGS,
         sanitizedHost,
-        '--script', 'http-title,ssl-cert,ssh-hostkey',
         '-oX', '-',
-      ], { timeout: 45000 });
+      ], { timeout: 20000 });
 
-      return this.parseNmapOutput(stdout);
-    } catch (err) {
-      console.warn(`Nmap scan failed for ${sanitizedHost}: ${err}`);
+      if (stderr) console.warn(`[NMAP] stderr: ${stderr}`);
+      console.log(`[NMAP] Raw output length: ${stdout.length} bytes`);
+      console.log(`[NMAP] Output preview: ${stdout.substring(0, 500)}`);
+
+      const vulns = this.parseNmapOutput(stdout);
+      console.log(`[NMAP] Parsed ${vulns.length} vulnerabilities for ${sanitizedHost}`);
+      return vulns;
+    } catch (err: any) {
+      console.error(`[NMAP] Scan FAILED for ${sanitizedHost}: ${err.message || err}`);
+      if (err.stderr) console.error(`[NMAP] stderr: ${err.stderr}`);
+      if (err.killed) console.error(`[NMAP] Process was killed (timeout?)`);
       return [];
     }
   }

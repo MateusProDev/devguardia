@@ -18,6 +18,9 @@ export class ScanProcessor {
 
   async process(job: Job<{ scanId: string }>) {
     const { scanId } = job.data;
+    const startTime = Date.now();
+
+    console.log(`[SCAN ${scanId}] Starting scan...`);
 
     await this.prisma.scan.update({
       where: { id: scanId },
@@ -31,21 +34,37 @@ export class ScanProcessor {
       const url = new URL(scan.url);
       const hostname = url.hostname;
 
+      console.log(`[SCAN ${scanId}] Target: ${scan.url} (hostname: ${hostname})`);
+
+      const nmapStart = Date.now();
+      const httpStart = Date.now();
+
       const [nmapVulns, httpVulns] = await Promise.all([
-        this.nmapService.scan(hostname),
-        this.httpService.analyze(scan.url),
+        this.nmapService.scan(hostname).then((r) => {
+          console.log(`[SCAN ${scanId}] Nmap finished in ${Date.now() - nmapStart}ms — found ${r.length} vulns: ${r.map((v) => v.title).join(', ') || 'none'}`);
+          return r;
+        }),
+        this.httpService.analyze(scan.url).then((r) => {
+          console.log(`[SCAN ${scanId}] HTTP finished in ${Date.now() - httpStart}ms — found ${r.length} vulns: ${r.map((v) => `${v.title}[${v.severity}]`).join(', ') || 'none'}`);
+          return r;
+        }),
       ]);
 
       const allVulns = [...nmapVulns, ...httpVulns];
       const score = calculateScore(allVulns);
 
+      console.log(`[SCAN ${scanId}] Total vulns: ${allVulns.length}, Score: ${score}`);
+      console.log(`[SCAN ${scanId}] Severity breakdown: CRITICAL=${allVulns.filter((v) => v.severity === 'CRITICAL').length} HIGH=${allVulns.filter((v) => v.severity === 'HIGH').length} MEDIUM=${allVulns.filter((v) => v.severity === 'MEDIUM').length} LOW=${allVulns.filter((v) => v.severity === 'LOW').length} INFO=${allVulns.filter((v) => v.severity === 'INFO').length}`);
+
       // Enrich first 3 vulnerabilities with AI (to control costs)
+      const aiStart = Date.now();
       const enriched = await Promise.all(
         allVulns.slice(0, 3).map(async (v, i) => {
           const ai = await this.aiService.explain(v);
           return { ...v, aiExplanation: ai.explanation, aiCodeFix: ai.codeFix };
         }),
       );
+      console.log(`[SCAN ${scanId}] AI enrichment finished in ${Date.now() - aiStart}ms`);
 
       const finalVulns = [
         ...enriched,
@@ -72,9 +91,9 @@ export class ScanProcessor {
         });
       });
 
-      console.log(`Scan ${scanId} completed with score ${score}`);
+      console.log(`[SCAN ${scanId}] COMPLETED in ${Date.now() - startTime}ms — score: ${score}, vulns: ${finalVulns.length}`);
     } catch (err) {
-      console.error(`Scan ${scanId} failed: ${err}`);
+      console.error(`[SCAN ${scanId}] FAILED in ${Date.now() - startTime}ms: ${err}`);
       await this.prisma.scan.update({
         where: { id: scanId },
         data: { status: 'FAILED', errorMsg: String(err) },

@@ -10,6 +10,7 @@ export class HttpAnalyzerService {
     const vulns: VulnRaw[] = [];
 
     try {
+      console.log(`[HTTP] Analyzing ${url}...`);
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
 
@@ -24,6 +25,9 @@ export class HttpAnalyzerService {
 
       const headers = response.headers;
       const finalUrl = response.url;
+
+      console.log(`[HTTP] Response: ${response.status} from ${finalUrl}`);
+      console.log(`[HTTP] Headers present: ${[...headers.keys()].join(', ')}`);
 
       // 1. HTTPS Check
       if (!finalUrl.startsWith('https://')) {
@@ -161,8 +165,110 @@ export class HttpAnalyzerService {
         }
       }
 
+      // 6. HTTPS redirect check
+      try {
+        const httpUrl = url.replace(/^https:\/\//, 'http://');
+        if (httpUrl !== url) {
+          const httpController = new AbortController();
+          const httpTimeout = setTimeout(() => httpController.abort(), 5000);
+          const httpResp = await fetch(httpUrl, {
+            method: 'HEAD',
+            redirect: 'manual',
+            signal: httpController.signal,
+            headers: { 'User-Agent': 'DevGuardBot/1.0' },
+          });
+          clearTimeout(httpTimeout);
+          const location = httpResp.headers.get('location') || '';
+          if (httpResp.status < 300 || httpResp.status >= 400 || !location.startsWith('https://')) {
+            vulns.push({
+              title: 'HTTP não redireciona para HTTPS',
+              severity: 'MEDIUM',
+              description: 'Acessar o site via HTTP não redireciona automaticamente para HTTPS.',
+              solution: 'Configure um redirect 301 de HTTP para HTTPS no servidor.',
+            });
+          }
+        }
+      } catch { /* skip if http not available */ }
+
+      // 7. Cross-Origin-Opener-Policy
+      if (!headers.get('cross-origin-opener-policy')) {
+        vulns.push({
+          title: 'Cross-Origin-Opener-Policy ausente',
+          severity: 'LOW',
+          description: 'Sem COOP, o site pode ser vulnerável a ataques cross-origin via window references.',
+          solution: 'Adicione: Cross-Origin-Opener-Policy: same-origin-allow-popups',
+        });
+      }
+
+      // 8. Cross-Origin-Resource-Policy
+      if (!headers.get('cross-origin-resource-policy')) {
+        vulns.push({
+          title: 'Cross-Origin-Resource-Policy ausente',
+          severity: 'INFO',
+          description: 'Sem CORP, recursos do site podem ser carregados por origens externas.',
+          solution: 'Adicione: Cross-Origin-Resource-Policy: same-origin',
+        });
+      }
+
+      // 9. Check page body for sensitive info leaks
+      const body = await response.text();
+      const sensitivePatterns = [
+        { pattern: /(?:sk_live_|sk_test_)[a-zA-Z0-9]{20,}/, title: 'Chave Stripe exposta no HTML', severity: 'CRITICAL' as const },
+        { pattern: /(?:AKIA|ASIA)[A-Z0-9]{16}/, title: 'AWS Access Key exposta no HTML', severity: 'CRITICAL' as const },
+        { pattern: /(?:-----BEGIN (?:RSA |EC )?PRIVATE KEY-----)/, title: 'Chave privada exposta no HTML', severity: 'CRITICAL' as const },
+        { pattern: /(?:mongodb\+srv|postgresql|mysql):\/\/[^\s"'<]+/, title: 'String de conexão de banco exposta no HTML', severity: 'CRITICAL' as const },
+        { pattern: /(?:password|secret|token|api.?key)\s*[:=]\s*["'][^"']{8,}["']/i, title: 'Possível credencial exposta no HTML', severity: 'HIGH' as const },
+      ];
+
+      for (const { pattern, title, severity } of sensitivePatterns) {
+        if (pattern.test(body)) {
+          vulns.push({
+            title,
+            severity,
+            description: `O HTML da página contém informações sensíveis que podem ser exploradas por atacantes.`,
+            solution: 'Remova todas as credenciais e chaves do código frontend. Use variáveis de ambiente no servidor.',
+          });
+        }
+      }
+
+      // 10. Check for common misconfigurations via well-known paths
+      const sensitiveEndpoints = [
+        { path: '/.env', title: 'Arquivo .env acessível publicamente', severity: 'CRITICAL' as const },
+        { path: '/.git/config', title: 'Repositório Git exposto', severity: 'CRITICAL' as const },
+        { path: '/wp-admin/', title: 'WordPress admin acessível', severity: 'MEDIUM' as const },
+        { path: '/phpinfo.php', title: 'phpinfo() acessível publicamente', severity: 'HIGH' as const },
+      ];
+
+      const baseUrl = new URL(url).origin;
+      await Promise.all(
+        sensitiveEndpoints.map(async ({ path, title, severity }) => {
+          try {
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), 5000);
+            const r = await fetch(`${baseUrl}${path}`, {
+              method: 'HEAD',
+              redirect: 'manual',
+              signal: ctrl.signal,
+              headers: { 'User-Agent': 'DevGuardBot/1.0' },
+            });
+            clearTimeout(t);
+            if (r.status === 200) {
+              console.log(`[HTTP] Sensitive path found: ${path} (${r.status})`);
+              vulns.push({
+                title,
+                severity,
+                description: `O caminho ${path} está acessível publicamente, expondo informações sensíveis.`,
+                solution: `Bloqueie o acesso a ${path} no servidor web. Nunca exponha arquivos de configuração.`,
+              });
+            }
+          } catch { /* ignore timeouts */ }
+        }),
+      );
+
+      console.log(`[HTTP] Analysis complete for ${url}: ${vulns.length} vulns found`);
+
     } catch (err) {
-      console.warn(`HTTP analysis failed for ${url}: ${err}`);
+      console.error(`[HTTP] Analysis FAILED for ${url}: ${err}`);
       vulns.push({
         title: 'Site inacessível ou timeout',
         severity: 'INFO',
