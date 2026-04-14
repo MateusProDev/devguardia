@@ -4,7 +4,7 @@ import { Shield, CheckCircle2 } from 'lucide-react';
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-gray-950">
-      <nav className="border-b border-gray-800 px-6 py-4">
+      <nav className="border-b border-gray-800 px-4 sm:px-6 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <Shield className="w-6 h-6 text-blue-500" />
@@ -16,13 +16,13 @@ export default function PricingPage() {
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-6 py-20">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold mb-4">Preços simples e transparentes</h1>
-          <p className="text-gray-400 text-lg">Comece grátis. Pague apenas quando precisar de mais.</p>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-20">
+        <div className="text-center mb-10 sm:mb-16">
+          <h1 className="text-2xl sm:text-4xl font-bold mb-4">Preços simples e transparentes</h1>
+          <p className="text-gray-400 text-base sm:text-lg">Começe grátis. Pague apenas quando precisar de mais.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 max-w-4xl mx-auto">
           {plans.map((p) => (
             <div
               key={p.name}

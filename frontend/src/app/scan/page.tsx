@@ -90,7 +90,7 @@ function ScanPageContent() {
 
   return (
     <div className="min-h-screen bg-gray-950">
-      <nav className="border-b border-gray-800 px-6 py-4">
+      <nav className="border-b border-gray-800 px-4 sm:px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
             <Shield className="w-6 h-6 text-blue-500" />
@@ -102,12 +102,12 @@ function ScanPageContent() {
         </div>
       </nav>
 
-      <div className="max-w-2xl mx-auto px-6 py-20">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-950 border border-blue-800 rounded-2xl mb-6">
-            <Shield className="w-8 h-8 text-blue-500" />
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-20">
+        <div className="text-center mb-8 sm:mb-10">
+          <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-blue-950 border border-blue-800 rounded-2xl mb-5 sm:mb-6">
+            <Shield className="w-7 h-7 sm:w-8 sm:h-8 text-blue-500" />
           </div>
-          <h1 className="text-3xl font-bold mb-3">Analisar Seguranca</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-3">Analisar Seguranca</h1>
           <p className="text-gray-400">
             Insira a URL do seu site para identificar vulnerabilidades de seguranca.
           </p>

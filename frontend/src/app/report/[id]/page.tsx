@@ -106,7 +106,7 @@ export default function ReportPage() {
 
   return (
     <div className="min-h-screen bg-gray-950">
-      <nav className="border-b border-gray-800 px-6 py-4">
+      <nav className="border-b border-gray-800 px-4 sm:px-6 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
             <Shield className="w-6 h-6 text-blue-500" />
@@ -118,12 +118,12 @@ export default function ReportPage() {
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-6 py-10">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
         {/* Report header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
+        <div className="flex flex-col gap-4 mb-8">
+          <div className="min-w-0">
             <p className="text-gray-400 text-sm mb-1">Relatório de segurança</p>
-            <h1 className="text-xl font-bold break-all">{report.url}</h1>
+            <h1 className="text-lg sm:text-xl font-bold break-all">{report.url}</h1>
             <p className="text-gray-500 text-xs mt-1">
               {new Date(report.createdAt).toLocaleDateString('pt-BR', {
                 day: '2-digit', month: 'long', year: 'numeric',
@@ -155,9 +155,9 @@ export default function ReportPage() {
         {/* Limited banner */}
         {report.isLimited && !isScanning && (
           <div className="card mb-6 bg-blue-950 border-blue-800">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <Lock className="w-5 h-5 text-blue-400" />
+            <div className="flex flex-col gap-4">
+              <div className="flex items-start gap-3">
+                <Lock className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold text-blue-300">Relatório parcial</p>
                   <p className="text-blue-400 text-sm">
@@ -168,7 +168,7 @@ export default function ReportPage() {
               </div>
               <button
                 onClick={() => setUpgradeOpen(true)}
-                className="btn-primary flex items-center gap-2 text-sm whitespace-nowrap"
+                className="btn-primary flex items-center justify-center gap-2 text-sm whitespace-nowrap w-full sm:w-auto sm:self-end"
               >
                 <CreditCard className="w-4 h-4" />
                 Desbloquear por R$9,90

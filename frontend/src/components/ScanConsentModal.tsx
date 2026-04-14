@@ -38,7 +38,7 @@ export default function ScanConsentModal({
   const canAccept = scrolledToBottom && checked;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-0 sm:px-4">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
@@ -46,9 +46,9 @@ export default function ScanConsentModal({
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-2xl bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-2xl bg-gray-900 border border-gray-700 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[95vh] sm:max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-gray-900/80">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-800 bg-gray-900/80 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-950 border border-amber-800 flex items-center justify-center">
               <Scale className="w-5 h-5 text-amber-500" />
@@ -67,19 +67,19 @@ export default function ScanConsentModal({
         </div>
 
         {/* Target URL badge */}
-        <div className="px-6 pt-4">
+        <div className="px-4 sm:px-6 pt-4 flex-shrink-0">
           <div className="flex items-center gap-2 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm">
             <Shield className="w-4 h-4 text-blue-400 flex-shrink-0" />
-            <span className="text-gray-400">Alvo da análise:</span>
+            <span className="text-gray-400 hidden sm:inline">Alvo da análise:</span>
             <span className="text-white font-medium truncate">{url}</span>
           </div>
         </div>
 
         {/* Legal text */}
-        <div className="px-6 pt-4">
+        <div className="px-4 sm:px-6 pt-4 flex-1 min-h-0">
           <div
             ref={scrollRef}
-            className="h-56 overflow-y-auto rounded-xl border border-gray-700 bg-gray-950 p-4 text-sm leading-relaxed text-gray-300 scroll-smooth custom-scrollbar"
+            className="h-40 sm:h-56 overflow-y-auto rounded-xl border border-gray-700 bg-gray-950 p-3 sm:p-4 text-sm leading-relaxed text-gray-300 scroll-smooth custom-scrollbar"
           >
             <div className="flex items-start gap-2 mb-4 p-3 bg-amber-950/40 border border-amber-900/50 rounded-lg">
               <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
@@ -119,7 +119,7 @@ export default function ScanConsentModal({
         </div>
 
         {/* Checkbox + Actions */}
-        <div className="px-6 py-4 border-t border-gray-800 mt-4">
+        <div className="px-4 sm:px-6 py-4 border-t border-gray-800 mt-4 flex-shrink-0">
           <label
             className={`flex items-start gap-3 mb-4 cursor-pointer select-none ${
               !scrolledToBottom ? 'opacity-40 pointer-events-none' : ''

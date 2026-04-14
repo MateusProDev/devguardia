@@ -103,30 +103,30 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-950">
       {/* Navbar */}
-      <nav className="border-b border-gray-800 px-6 py-4">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
+      <nav className="border-b border-gray-800 px-4 sm:px-6 py-4">
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Shield className="w-6 h-6 text-blue-500" />
             <span className="font-bold text-lg">DevGuard AI</span>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-gray-400 text-sm">{user?.email}</span>
-            <button onClick={handleSignOut} className="flex items-center gap-2 text-gray-400 hover:text-white text-sm transition-colors">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-gray-400 text-sm truncate hidden sm:block">{user?.email}</span>
+            <button onClick={handleSignOut} className="flex items-center gap-2 text-gray-400 hover:text-white text-sm transition-colors flex-shrink-0">
               <LogOut className="w-4 h-4" />
-              Sair
+              <span className="hidden sm:inline">Sair</span>
             </button>
           </div>
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-6 py-10">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl font-bold">Seus Scans</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">Seus Scans</h1>
             <p className="text-gray-400 text-sm mt-1">Gerencie e acompanhe suas análises de segurança</p>
           </div>
-          <Link href="/scan" className="btn-primary flex items-center gap-2 text-sm">
+          <Link href="/scan" className="btn-primary flex items-center justify-center gap-2 text-sm w-full sm:w-auto">
             <Plus className="w-4 h-4" />
             Novo Scan
           </Link>
@@ -150,38 +150,52 @@ export default function DashboardPage() {
         ) : (
           <div className="space-y-4">
             {scans.map((scan) => (
-              <div key={scan.id} className="card flex items-center gap-4">
-                <StatusIcon status={scan.status} />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{scan.url}</p>
-                  <p className="text-gray-500 text-xs mt-0.5">
-                    {new Date(scan.createdAt).toLocaleDateString('pt-BR', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
+              <div key={scan.id} className="card flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                  <StatusIcon status={scan.status} />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate text-sm sm:text-base">{scan.url}</p>
+                    <p className="text-gray-500 text-xs mt-0.5">
+                      {new Date(scan.createdAt).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                  <div className="text-right sm:hidden">
+                    {scan.score !== null && (
+                      <div className={`text-xl font-bold ${scoreColor(scan.score)}`}>
+                        {scan.score}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="text-right">
-                  {scan.score !== null && (
-                    <div className={`text-2xl font-bold ${scoreColor(scan.score)}`}>
-                      {scan.score}
-                    </div>
+                <div className="flex items-center justify-between sm:justify-end gap-3">
+                  <div className="text-right hidden sm:block">
+                    {scan.score !== null && (
+                      <div className={`text-2xl font-bold ${scoreColor(scan.score)}`}>
+                        {scan.score}
+                      </div>
+                    )}
+                    {scan.status === 'RUNNING' || scan.status === 'QUEUED' ? (
+                      <span className="text-yellow-500 text-xs">Analisando...</span>
+                    ) : null}
+                  </div>
+                  {scan.status === 'COMPLETED' && (
+                    <Link
+                      href={`/report/${scan.id}`}
+                      className="btn-outline text-sm py-2 px-4 whitespace-nowrap w-full sm:w-auto text-center"
+                    >
+                      Ver relatório
+                    </Link>
                   )}
-                  {scan.status === 'RUNNING' || scan.status === 'QUEUED' ? (
-                    <span className="text-yellow-500 text-xs">Analisando...</span>
-                  ) : null}
+                  {(scan.status === 'RUNNING' || scan.status === 'QUEUED') && (
+                    <span className="text-yellow-500 text-xs sm:hidden">Analisando...</span>
+                  )}
                 </div>
-                {scan.status === 'COMPLETED' && (
-                  <Link
-                    href={`/report/${scan.id}`}
-                    className="btn-outline text-sm py-2 px-4 whitespace-nowrap"
-                  >
-                    Ver relatório
-                  </Link>
-                )}
               </div>
             ))}
           </div>
