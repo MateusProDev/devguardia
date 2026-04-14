@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Body,
+  Param,
   Query,
   UseGuards,
   Req,
@@ -12,6 +13,7 @@ import {
 import { FirebaseAuthGuard } from '../../common/guards/firebase-auth.guard';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { CreatePixPaymentDto } from './dto/create-pix-payment.dto';
 
 @Controller('payment')
 export class PaymentsController {
@@ -26,6 +28,18 @@ export class PaymentsController {
   @UseGuards(FirebaseAuthGuard)
   async processPayment(@Req() req: any, @Body() dto: CreatePaymentDto) {
     return this.paymentsService.processCardPayment(req.user.id, dto);
+  }
+
+  @Post('pix')
+  @UseGuards(FirebaseAuthGuard)
+  async processPixPayment(@Req() req: any, @Body() dto: CreatePixPaymentDto) {
+    return this.paymentsService.processPixPayment(req.user.id, dto);
+  }
+
+  @Get('status/:id')
+  @UseGuards(FirebaseAuthGuard)
+  async checkStatus(@Req() req: any, @Param('id') id: string) {
+    return this.paymentsService.checkPaymentStatus(id, req.user.id);
   }
 
   @Get('installments')

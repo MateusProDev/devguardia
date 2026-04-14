@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePaymentDto, PaymentType } from './dto/create-payment.dto';
+import { CreatePixPaymentDto } from './dto/create-pix-payment.dto';
 import * as crypto from 'crypto';
 
 const SINGLE_SCAN_PRICE = parseInt(process.env.SINGLE_SCAN_PRICE || '990');
@@ -118,6 +119,143 @@ export class PaymentsService {
       statusDetail: mpResponse.status_detail,
       mercadoPagoId: mpResponse.id,
     };
+  }
+
+  async processPixPayment(userId: string, dto: CreatePixPaymentDto) {
+    const amount =
+      dto.type === PaymentType.SINGLE_SCAN ? SINGLE_SCAN_PRICE : SUBSCRIPTION_PRICE;
+    const description =
+      dto.type === PaymentType.SINGLE_SCAN
+        ? 'DevGuard AI - Relatório Completo'
+        : 'DevGuard AI - Assinatura Mensal';
+
+    if (dto.type === PaymentType.SINGLE_SCAN) {
+      if (!dto.scanId) throw new BadRequestException('scanId é obrigatório para scan avulso.');
+      const scan = await this.prisma.scan.findUnique({ where: { id: dto.scanId } });
+      if (!scan) throw new NotFoundException('Scan não encontrado.');
+      if (scan.userId !== userId) throw new ForbiddenException('Acesso negado.');
+    }
+
+    const payment = await this.prisma.payment.create({
+      data: {
+        userId,
+        scanId: dto.scanId || null,
+        type: dto.type,
+        amount,
+        status: 'PENDING',
+      },
+    });
+
+    const body = {
+      transaction_amount: amount / 100,
+      description,
+      payment_method_id: 'pix',
+      payer: {
+        email: dto.email,
+      },
+      external_reference: payment.id,
+      notification_url: `${process.env.BACKEND_URL || 'http://localhost:3001'}/api/payment/webhook`,
+      statement_descriptor: 'DEVGUARDAI',
+    };
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE}/v1/payments`, {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${MERCADOPAGO_ACCESS_TOKEN}`,
+          'X-Idempotency-Key': payment.id,
+        },
+        body: JSON.stringify(body),
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    const mpResponse = await response.json();
+
+    if (!response.ok) {
+      this.logger.error(`MercadoPago PIX error: ${JSON.stringify(mpResponse)}`);
+      await this.prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: 'REJECTED' },
+      });
+      throw new BadRequestException('Erro ao gerar PIX. Tente novamente.');
+    }
+
+    const status = this.mapStatus(mpResponse.status);
+
+    await this.prisma.payment.update({
+      where: { id: payment.id },
+      data: {
+        mercadoPagoId: String(mpResponse.id),
+        status,
+      },
+    });
+
+    if (status === 'APPROVED') {
+      await this.activatePurchase(payment);
+    }
+
+    const pixData = mpResponse.point_of_interaction?.transaction_data;
+
+    return {
+      paymentId: payment.id,
+      status,
+      mercadoPagoId: mpResponse.id,
+      qrCode: pixData?.qr_code || '',
+      qrCodeBase64: pixData?.qr_code_base64 || '',
+      ticketUrl: pixData?.ticket_url || '',
+      expiresAt: mpResponse.date_of_expiration || null,
+    };
+  }
+
+  async checkPaymentStatus(paymentId: string, userId: string) {
+    const payment = await this.prisma.payment.findUnique({
+      where: { id: paymentId },
+    });
+
+    if (!payment) throw new NotFoundException('Pagamento não encontrado.');
+    if (payment.userId !== userId) throw new ForbiddenException('Acesso negado.');
+
+    if (payment.status === 'PENDING' && payment.mercadoPagoId) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+
+      try {
+        const response = await fetch(`${API_BASE}/v1/payments/${payment.mercadoPagoId}`, {
+          headers: { Authorization: `Bearer ${MERCADOPAGO_ACCESS_TOKEN}` },
+          signal: controller.signal,
+        });
+
+        if (response.ok) {
+          const mpPayment = await response.json();
+          const newStatus = this.mapStatus(mpPayment.status);
+
+          if (newStatus !== payment.status) {
+            await this.prisma.payment.update({
+              where: { id: paymentId },
+              data: { status: newStatus },
+            });
+
+            if (newStatus === 'APPROVED') {
+              await this.activatePurchase(payment);
+            }
+
+            return { status: newStatus };
+          }
+        }
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+
+    return { status: payment.status };
   }
 
   async getInstallments(amount: number, bin: string) {

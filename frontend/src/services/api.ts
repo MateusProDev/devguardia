@@ -55,4 +55,17 @@ export const api = {
 
   getInstallments: (amount: number, bin: string) =>
     authFetch(`/payment/installments?amount=${amount}&bin=${bin}`),
+
+  processPixPayment: (data: {
+    type: 'SINGLE_SCAN' | 'SUBSCRIPTION';
+    scanId?: string;
+    email: string;
+  }) =>
+    authFetch('/payment/pix', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  checkPaymentStatus: (paymentId: string) =>
+    authFetch(`/payment/status/${paymentId}`),
 };
