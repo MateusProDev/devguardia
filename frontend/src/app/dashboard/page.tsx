@@ -77,7 +77,7 @@ export default function DashboardPage() {
         <div className="text-center">
           <Shield className="w-16 h-16 text-blue-500 mx-auto mb-6" />
           <h1 className="text-2xl font-bold mb-2">DevGuard AI</h1>
-          <p className="text-gray-400 mb-8">Fa\u00e7a login para acessar o painel</p>
+          <p className="text-gray-400 mb-8">Faça login para acessar o painel</p>
           <button
             onClick={handleLogin}
             disabled={loginLoading}
@@ -93,7 +93,7 @@ export default function DashboardPage() {
             )}
           </button>
           <p className="text-gray-600 text-sm mt-4">
-            <a href="https://devguardia.cloud" className="hover:text-gray-400 transition-colors">\u2190 Voltar ao site</a>
+            <a href="https://devguardia.cloud" className="hover:text-gray-400 transition-colors">&larr; Voltar ao site</a>
           </p>
         </div>
       </div>
