@@ -28,7 +28,11 @@ export default function DashboardPage() {
     if (!auth) return;
     const unsub = onAuthStateChanged(auth, async (u: User | null) => {
       if (!u) {
-        router.push('/');
+        if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+          window.location.href = 'https://devguardia.cloud';
+        } else {
+          router.push('/');
+        }
         return;
       }
       setUser(u);
@@ -44,7 +48,11 @@ export default function DashboardPage() {
 
   async function handleSignOut() {
     await signOut();
-    router.push('/');
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+      window.location.href = 'https://devguardia.cloud';
+    } else {
+      router.push('/');
+    }
   }
 
   return (

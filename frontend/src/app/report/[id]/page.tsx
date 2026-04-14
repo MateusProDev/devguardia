@@ -62,7 +62,13 @@ export default function ReportPage() {
   useEffect(() => {
     if (!auth) return;
     const unsub = onAuthStateChanged(auth, (u: import('firebase/auth').User | null) => {
-      if (!u) router.push('/');
+      if (!u) {
+        if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+          window.location.href = 'https://devguardia.cloud';
+        } else {
+          router.push('/');
+        }
+      }
       else fetchReport();
     });
     return () => unsub();

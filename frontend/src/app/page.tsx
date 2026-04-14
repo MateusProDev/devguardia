@@ -60,6 +60,11 @@ function useCounter(end: number, duration = 2000) {
   return { count, ref };
 }
 
+const APP_URL =
+  typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+    ? 'https://app.devguardia.cloud'
+    : '';
+
 export default function LandingPage() {
   const router = useRouter();
   const [loadingAuth, setLoadingAuth] = useState(false);
@@ -70,7 +75,7 @@ export default function LandingPage() {
   useEffect(() => {
     if (!auth) return;
     const unsub = onAuthStateChanged(auth, (user: import('firebase/auth').User | null) => {
-      if (user) router.push('/dashboard');
+      if (user) window.location.href = `${APP_URL}/dashboard`;
     });
     return () => unsub();
   }, [router]);
@@ -86,9 +91,9 @@ export default function LandingPage() {
     try {
       await signInWithGoogle();
       if (redirectToScan && demoUrl) {
-        router.push(`/scan?url=${encodeURIComponent(demoUrl)}`);
+        window.location.href = `${APP_URL}/scan?url=${encodeURIComponent(demoUrl)}`;
       } else {
-        router.push('/dashboard');
+        window.location.href = `${APP_URL}/dashboard`;
       }
     } catch (e) {
       console.error(e);
