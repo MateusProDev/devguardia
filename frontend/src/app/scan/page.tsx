@@ -7,6 +7,7 @@ import { auth } from '../../lib/firebase';
 import { api } from '../../services/api';
 import { Shield, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import ScanConsentModal from '../../components/ScanConsentModal';
 
 const checks = [
   'Certificado SSL/TLS e HTTPS',
@@ -25,6 +26,8 @@ function ScanPageContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [authChecked, setAuthChecked] = useState(false);
+  const [showConsent, setShowConsent] = useState(false);
+  const [consentText, setConsentText] = useState('');
 
   useEffect(() => {
     const prefilledUrl = searchParams?.get('url') || '';
@@ -53,11 +56,24 @@ function ScanPageContent() {
       return;
     }
 
-    setLoading(true);
     try {
-      const scan = await api.createScan(url);
+      const { text } = await api.getConsentText();
+      setConsentText(text);
+      setShowConsent(true);
+    } catch {
+      setError('Erro ao carregar termos. Tente novamente.');
+    }
+  }
+
+  async function handleConsentAccept() {
+    setLoading(true);
+    setError('');
+    try {
+      const scan = await api.createScan(url, true);
+      setShowConsent(false);
       router.push(`/report/${scan.id}`);
     } catch (err: any) {
+      setShowConsent(false);
       setError(err.message || 'Erro ao iniciar scan. Tente novamente.');
     } finally {
       setLoading(false);
@@ -154,6 +170,16 @@ function ScanPageContent() {
           </ul>
         </div>
       </div>
+
+      {showConsent && consentText && (
+        <ScanConsentModal
+          url={url}
+          consentText={consentText}
+          loading={loading}
+          onAccept={handleConsentAccept}
+          onCancel={() => setShowConsent(false)}
+        />
+      )}
     </div>
   );
 }

@@ -22,8 +22,29 @@ export class ScansService {
     private readonly queueService: QueueService,
   ) {}
 
-  async create(userId: string, dto: CreateScanDto) {
-    const { url } = dto;
+  private readonly CONSENT_TEXT =
+    'Declaro, sob as penas da lei, que sou o proprietário ou possuo autorização expressa do proprietário ' +
+    'do domínio/aplicação informado(a) para realizar esta análise de segurança. Estou ciente de que: ' +
+    '(1) a realização de testes de segurança sem autorização pode configurar crime nos termos do Art. 154-A ' +
+    'do Código Penal Brasileiro (Lei nº 12.737/2012 — Lei Carolina Dieckmann); ' +
+    '(2) esta análise deve ser utilizada exclusivamente para fins legítimos de segurança da informação ' +
+    'em projetos pessoais ou com autorização documentada de terceiros; ' +
+    '(3) o tratamento de dados pessoais eventualmente coletados durante a análise está sujeito à ' +
+    'Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD); ' +
+    '(4) a DevGuard AI armazena este consentimento como registro legal e poderá apresentá-lo ' +
+    'às autoridades competentes em caso de investigação. ' +
+    'Assumo total responsabilidade civil e criminal pelo uso desta ferramenta.';
+
+  async getConsentText(): Promise<string> {
+    return this.CONSENT_TEXT;
+  }
+
+  async create(userId: string, dto: CreateScanDto, meta: { ip: string; userAgent: string }) {
+    const { url, acceptedTerms } = dto;
+
+    if (!acceptedTerms) {
+      throw new BadRequestException('É obrigatório aceitar os termos de responsabilidade para iniciar um scan.');
+    }
 
     if (!isValidScanUrl(url)) {
       throw new BadRequestException('URL inválida ou não permitida.');
@@ -50,6 +71,17 @@ export class ScansService {
         url,
         status: 'QUEUED',
         isPremium: hasSub,
+      },
+    });
+
+    await this.prisma.scanConsent.create({
+      data: {
+        userId,
+        scanId: scan.id,
+        targetUrl: url,
+        ipAddress: meta.ip,
+        userAgent: meta.userAgent,
+        consentText: this.CONSENT_TEXT,
       },
     });
 

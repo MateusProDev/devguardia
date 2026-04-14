@@ -24,8 +24,10 @@ async function authFetch(path: string, options: RequestInit = {}) {
 }
 
 export const api = {
-  createScan: (url: string) =>
-    authFetch('/scan', { method: 'POST', body: JSON.stringify({ url }) }),
+  createScan: (url: string, acceptedTerms: boolean) =>
+    authFetch('/scan', { method: 'POST', body: JSON.stringify({ url, acceptedTerms }) }),
+
+  getConsentText: () => authFetch('/scan/consent-text'),
 
   getScan: (id: string) => authFetch(`/scan/${id}`),
 
