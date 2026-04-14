@@ -52,6 +52,7 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
   const [cardBrand, setCardBrand] = useState('');
 
   // PIX state
+  const [cpf, setCpf] = useState('');
   const [pixQrCode, setPixQrCode] = useState('');
   const [pixCopied, setPixCopied] = useState(false);
   const pixPollRef = useRef<NodeJS.Timeout | null>(null);
@@ -122,6 +123,14 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
   function formatExpiry(value: string) {
     const digits = value.replace(/\D/g, '').slice(0, 4);
     if (digits.length >= 3) return digits.slice(0, 2) + '/' + digits.slice(2);
+    return digits;
+  }
+
+  function formatCpf(value: string) {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (digits.length > 9) return digits.replace(/(\d{3})(\d{3})(\d{3})(\d+)/, '$1.$2.$3-$4');
+    if (digits.length > 6) return digits.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
+    if (digits.length > 3) return digits.replace(/(\d{3})(\d+)/, '$1.$2');
     return digits;
   }
 
@@ -207,7 +216,8 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
 
   // --- PIX ---
   async function handlePixGenerate() {
-    if (!selectedType || !email) return;
+    const cpfDigits = cpf.replace(/\D/g, '');
+    if (!selectedType || !email || cpfDigits.length !== 11) return;
 
     setError('');
     setLoading(true);
@@ -217,6 +227,7 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
         type: selectedType,
         scanId: selectedType === 'SINGLE_SCAN' ? scanId : undefined,
         email,
+        cpf: cpfDigits,
       });
 
       if (result.qrCode) {
@@ -589,9 +600,23 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
                     />
                   </div>
 
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1.5">CPF do pagador</label>
+                    <input
+                      type="text"
+                      required
+                      inputMode="numeric"
+                      value={cpf}
+                      onChange={(e) => setCpf(formatCpf(e.target.value))}
+                      placeholder="000.000.000-00"
+                      maxLength={14}
+                      className="input-field"
+                    />
+                  </div>
+
                   <button
                     onClick={handlePixGenerate}
-                    disabled={loading || !email}
+                    disabled={loading || !email || cpf.replace(/\D/g, '').length !== 11}
                     className="w-full py-3.5 flex items-center justify-center gap-2 text-sm font-semibold rounded-xl transition-all duration-200 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? (
@@ -673,4 +698,4 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
       </div>
     </div>
   );
-}
+}

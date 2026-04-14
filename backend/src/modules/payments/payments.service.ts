@@ -152,6 +152,12 @@ export class PaymentsService {
       payment_method_id: 'pix',
       payer: {
         email: dto.email,
+        first_name: 'DevGuard',
+        last_name: 'User',
+        identification: {
+          type: 'CPF',
+          number: dto.cpf,
+        },
       },
       external_reference: payment.id,
       notification_url: `${process.env.BACKEND_URL || 'http://localhost:3001'}/api/payment/webhook`,

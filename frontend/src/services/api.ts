@@ -60,6 +60,7 @@ export const api = {
     type: 'SINGLE_SCAN' | 'SUBSCRIPTION';
     scanId?: string;
     email: string;
+    cpf: string;
   }) =>
     authFetch('/payment/pix', {
       method: 'POST',
