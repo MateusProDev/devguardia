@@ -20,10 +20,16 @@ export class PaymentsService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async createPreference(userId: string, dto: CreatePaymentDto) {
+  getPublicKey() {
+    const key = process.env.MERCADOPAGO_PUBLIC_KEY || '';
+    if (!key) throw new BadRequestException('Chave pública não configurada.');
+    return { publicKey: key };
+  }
+
+  async processCardPayment(userId: string, dto: CreatePaymentDto) {
     const amount =
       dto.type === PaymentType.SINGLE_SCAN ? SINGLE_SCAN_PRICE : SUBSCRIPTION_PRICE;
-    const title =
+    const description =
       dto.type === PaymentType.SINGLE_SCAN
         ? 'DevGuard AI - Relatório Completo'
         : 'DevGuard AI - Assinatura Mensal';
@@ -46,56 +52,97 @@ export class PaymentsService {
     });
 
     const body = {
-      items: [
-        {
-          id: payment.id,
-          title,
-          quantity: 1,
-          unit_price: amount / 100,
-          currency_id: 'BRL',
-        },
-      ],
+      transaction_amount: amount / 100,
+      token: dto.token,
+      description,
+      installments: dto.installments,
+      payment_method_id: dto.paymentMethodId,
+      issuer_id: dto.issuerId || undefined,
+      payer: {
+        email: dto.email,
+      },
       external_reference: payment.id,
       notification_url: `${process.env.BACKEND_URL || 'http://localhost:3001'}/api/payment/webhook`,
-      back_urls: {
-        success: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard?payment=success`,
-        failure: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard?payment=failure`,
-        pending: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard?payment=pending`,
-      },
-      auto_return: 'approved',
+      statement_descriptor: 'DEVGUARDAI',
     };
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30000);
-    const response = await fetch(`${API_BASE}/checkout/preferences`, {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${MERCADOPAGO_ACCESS_TOKEN}`,
-      },
-      body: JSON.stringify(body),
-    });
-    clearTimeout(timeout);
 
-    if (!response.ok) {
-      const err = await response.text();
-      this.logger.error(`MercadoPago error: ${err}`);
-      throw new BadRequestException('Erro ao criar preferência de pagamento.');
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE}/v1/payments`, {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${MERCADOPAGO_ACCESS_TOKEN}`,
+          'X-Idempotency-Key': payment.id,
+        },
+        body: JSON.stringify(body),
+      });
+    } finally {
+      clearTimeout(timeout);
     }
 
-    const preference = await response.json();
+    const mpResponse = await response.json();
+
+    if (!response.ok) {
+      this.logger.error(`MercadoPago error: ${JSON.stringify(mpResponse)}`);
+      await this.prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: 'REJECTED' },
+      });
+
+      const userMessage = this.getErrorMessage(mpResponse);
+      throw new BadRequestException(userMessage);
+    }
+
+    const status = this.mapStatus(mpResponse.status);
 
     await this.prisma.payment.update({
       where: { id: payment.id },
-      data: { preferenceId: preference.id },
+      data: {
+        mercadoPagoId: String(mpResponse.id),
+        status,
+      },
     });
 
+    if (status === 'APPROVED') {
+      await this.activatePurchase(payment);
+    }
+
     return {
-      preferenceId: preference.id,
-      checkoutUrl: preference.init_point,
-      sandboxUrl: preference.sandbox_init_point,
+      paymentId: payment.id,
+      status,
+      statusDetail: mpResponse.status_detail,
+      mercadoPagoId: mpResponse.id,
     };
+  }
+
+  async getInstallments(amount: number, bin: string) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    try {
+      const url = new URL(`${API_BASE}/v1/payment_methods/installments`);
+      url.searchParams.set('amount', String(amount / 100));
+      url.searchParams.set('bin', bin);
+      url.searchParams.set('processing_mode', 'aggregator');
+
+      const response = await fetch(url.toString(), {
+        headers: { Authorization: `Bearer ${MERCADOPAGO_ACCESS_TOKEN}` },
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        return [];
+      }
+
+      return response.json();
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   async handleWebhook(body: any, signature: string) {
@@ -128,11 +175,16 @@ export class PaymentsService {
   private async processPaymentNotification(mpPaymentId: string) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
-    const response = await fetch(`${API_BASE}/v1/payments/${mpPaymentId}`, {
-      headers: { Authorization: `Bearer ${MERCADOPAGO_ACCESS_TOKEN}` },
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
+
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE}/v1/payments/${mpPaymentId}`, {
+        headers: { Authorization: `Bearer ${MERCADOPAGO_ACCESS_TOKEN}` },
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!response.ok) {
       this.logger.error(`Failed to fetch MP payment ${mpPaymentId}`);
@@ -150,12 +202,7 @@ export class PaymentsService {
 
     if (!payment) return;
 
-    const status =
-      mpPayment.status === 'approved'
-        ? 'APPROVED'
-        : mpPayment.status === 'rejected'
-          ? 'REJECTED'
-          : 'PENDING';
+    const status = this.mapStatus(mpPayment.status);
 
     await this.prisma.payment.update({
       where: { id: paymentId },
@@ -163,21 +210,60 @@ export class PaymentsService {
     });
 
     if (status === 'APPROVED') {
-      if (payment.type === 'SINGLE_SCAN' && payment.scanId) {
-        await this.prisma.scan.update({
-          where: { id: payment.scanId },
-          data: { isPremium: true },
-        });
-      } else if (payment.type === 'SUBSCRIPTION') {
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 30);
-
-        await this.prisma.subscription.upsert({
-          where: { userId: payment.userId },
-          update: { active: true, expiresAt },
-          create: { userId: payment.userId, active: true, expiresAt },
-        });
-      }
+      await this.activatePurchase(payment);
     }
+  }
+
+  private mapStatus(mpStatus: string): 'APPROVED' | 'REJECTED' | 'PENDING' {
+    if (mpStatus === 'approved') return 'APPROVED';
+    if (mpStatus === 'rejected') return 'REJECTED';
+    return 'PENDING';
+  }
+
+  private async activatePurchase(payment: { id: string; type: string; scanId: string | null; userId: string }) {
+    if (payment.type === 'SINGLE_SCAN' && payment.scanId) {
+      await this.prisma.scan.update({
+        where: { id: payment.scanId },
+        data: { isPremium: true },
+      });
+    } else if (payment.type === 'SUBSCRIPTION') {
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
+
+      await this.prisma.subscription.upsert({
+        where: { userId: payment.userId },
+        update: { active: true, expiresAt },
+        create: { userId: payment.userId, active: true, expiresAt },
+      });
+    }
+  }
+
+  private getErrorMessage(mpResponse: any): string {
+    const cause = mpResponse?.cause?.[0]?.code;
+    const errorMessages: Record<string, string> = {
+      'cc_rejected_bad_filled_card_number': 'Número do cartão inválido.',
+      'cc_rejected_bad_filled_date': 'Data de validade inválida.',
+      'cc_rejected_bad_filled_other': 'Dados do cartão incorretos.',
+      'cc_rejected_bad_filled_security_code': 'Código de segurança inválido.',
+      'cc_rejected_blacklist': 'Pagamento não autorizado.',
+      'cc_rejected_call_for_authorize': 'Entre em contato com sua operadora de cartão.',
+      'cc_rejected_card_disabled': 'Cartão desabilitado. Ative-o junto à operadora.',
+      'cc_rejected_duplicated_payment': 'Pagamento duplicado. Já existe uma cobrança.',
+      'cc_rejected_high_risk': 'Pagamento recusado por risco de fraude.',
+      'cc_rejected_insufficient_amount': 'Saldo insuficiente.',
+      'cc_rejected_max_attempts': 'Limite de tentativas atingido. Use outro cartão.',
+      'cc_rejected_other_reason': 'Pagamento recusado pela operadora.',
+    };
+
+    const statusDetail = mpResponse?.status_detail;
+    if (statusDetail && errorMessages[statusDetail]) {
+      return errorMessages[statusDetail];
+    }
+
+    if (cause) {
+      return `Erro no pagamento (código: ${cause}).`;
+    }
+
+    return 'Erro ao processar pagamento. Verifique os dados e tente novamente.';
   }
 }

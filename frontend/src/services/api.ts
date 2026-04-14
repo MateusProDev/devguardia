@@ -37,9 +37,22 @@ export const api = {
 
   getSubscription: () => authFetch('/user/subscription'),
 
-  createCheckout: (type: 'SINGLE_SCAN' | 'SUBSCRIPTION', scanId?: string) =>
-    authFetch('/payment/checkout', {
+  getPaymentPublicKey: () => authFetch('/payment/public-key'),
+
+  processPayment: (data: {
+    type: 'SINGLE_SCAN' | 'SUBSCRIPTION';
+    scanId?: string;
+    token: string;
+    paymentMethodId: string;
+    email: string;
+    installments: number;
+    issuerId?: string;
+  }) =>
+    authFetch('/payment/process', {
       method: 'POST',
-      body: JSON.stringify({ type, scanId }),
+      body: JSON.stringify(data),
     }),
+
+  getInstallments: (amount: number, bin: string) =>
+    authFetch(`/payment/installments?amount=${amount}&bin=${bin}`),
 };

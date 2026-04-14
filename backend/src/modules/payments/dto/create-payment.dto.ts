@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsNumber, IsNotEmpty, Min, Max } from 'class-validator';
 
 export enum PaymentType {
   SINGLE_SCAN = 'SINGLE_SCAN',
@@ -12,4 +12,25 @@ export class CreatePaymentDto {
   @IsOptional()
   @IsString()
   scanId?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  token: string;
+
+  @IsString()
+  @IsNotEmpty()
+  paymentMethodId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  email: string;
+
+  @IsNumber()
+  @Min(1)
+  @Max(12)
+  installments: number;
+
+  @IsOptional()
+  @IsString()
+  issuerId?: string;
 }

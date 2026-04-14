@@ -1,7 +1,9 @@
 import {
   Controller,
   Post,
+  Get,
   Body,
+  Query,
   UseGuards,
   Req,
   Headers,
@@ -15,10 +17,24 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
-  @Post('checkout')
+  @Get('public-key')
+  getPublicKey() {
+    return this.paymentsService.getPublicKey();
+  }
+
+  @Post('process')
   @UseGuards(FirebaseAuthGuard)
-  async createCheckout(@Req() req: any, @Body() dto: CreatePaymentDto) {
-    return this.paymentsService.createPreference(req.user.id, dto);
+  async processPayment(@Req() req: any, @Body() dto: CreatePaymentDto) {
+    return this.paymentsService.processCardPayment(req.user.id, dto);
+  }
+
+  @Get('installments')
+  @UseGuards(FirebaseAuthGuard)
+  async getInstallments(
+    @Query('amount') amount: string,
+    @Query('bin') bin: string,
+  ) {
+    return this.paymentsService.getInstallments(parseInt(amount), bin);
   }
 
   @Post('webhook')
