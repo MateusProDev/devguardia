@@ -63,11 +63,7 @@ export default function ReportPage() {
     if (!auth) return;
     const unsub = onAuthStateChanged(auth, (u: import('firebase/auth').User | null) => {
       if (!u) {
-        if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-          window.location.href = 'https://devguardia.cloud';
-        } else {
-          router.push('/');
-        }
+        router.push('/dashboard');
       }
       else fetchReport();
     });

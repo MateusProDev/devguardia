@@ -25,10 +25,6 @@ import {
   Menu,
   X,
 } from 'lucide-react';
-import { signInWithGoogle } from '../services/auth';
-import { useRouter } from 'next/navigation';
-import { auth } from '../lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
 
 /* ─── Animated counter hook ─── */
 function useCounter(end: number, duration = 2000) {
@@ -66,19 +62,9 @@ const APP_URL =
     : '';
 
 export default function LandingPage() {
-  const router = useRouter();
-  const [loadingAuth, setLoadingAuth] = useState(false);
   const [demoUrl, setDemoUrl] = useState('');
   const [mobileMenu, setMobileMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    if (!auth) return;
-    const unsub = onAuthStateChanged(auth, (user: import('firebase/auth').User | null) => {
-      if (user) window.location.href = `${APP_URL}/dashboard`;
-    });
-    return () => unsub();
-  }, [router]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -86,19 +72,11 @@ export default function LandingPage() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  async function handleLogin(redirectToScan = false) {
-    setLoadingAuth(true);
-    try {
-      await signInWithGoogle();
-      if (redirectToScan && demoUrl) {
-        window.location.href = `${APP_URL}/scan?url=${encodeURIComponent(demoUrl)}`;
-      } else {
-        window.location.href = `${APP_URL}/dashboard`;
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoadingAuth(false);
+  function goToApp(withUrl = false) {
+    if (withUrl && demoUrl) {
+      window.location.href = `${APP_URL}/scan?url=${encodeURIComponent(demoUrl)}`;
+    } else {
+      window.location.href = `${APP_URL}/dashboard`;
     }
   }
 
@@ -146,11 +124,11 @@ export default function LandingPage() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <button onClick={() => handleLogin()} disabled={loadingAuth} className="btn-outline text-sm py-2 px-4">
+            <button onClick={() => goToApp()} className="btn-outline text-sm py-2 px-4">
               Login
             </button>
-            <button onClick={() => handleLogin()} disabled={loadingAuth} className="btn-primary text-sm py-2 px-5">
-              {loadingAuth ? 'Entrando...' : 'Começar grátis'}
+            <button onClick={() => goToApp()} className="btn-primary text-sm py-2 px-5">
+              Começar grátis
             </button>
           </div>
 
@@ -172,8 +150,8 @@ export default function LandingPage() {
             <a href="#pricing" className="block text-gray-300 hover:text-white transition-colors" onClick={() => setMobileMenu(false)}>
               Preços
             </a>
-            <button onClick={() => handleLogin()} disabled={loadingAuth} className="btn-primary w-full text-sm mt-2">
-              {loadingAuth ? 'Entrando...' : 'Começar grátis'}
+            <button onClick={() => goToApp()} className="btn-primary w-full text-sm mt-2">
+              Começar grátis
             </button>
           </div>
         )}
@@ -245,18 +223,11 @@ export default function LandingPage() {
                 />
               </div>
               <button
-                onClick={() => handleLogin(true)}
-                disabled={loadingAuth}
+                onClick={() => goToApp(true)}
                 className="btn-primary flex items-center justify-center gap-2 whitespace-nowrap text-base px-8 py-4 shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 transition-all"
               >
-                {loadingAuth ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <>
-                    Analisar grátis
-                    <ArrowRight className="w-5 h-5" />
-                  </>
-                )}
+                Analisar grátis
+                <ArrowRight className="w-5 h-5" />
               </button>
             </div>
             <p className="text-gray-500 text-sm mt-4 flex items-center justify-center gap-2">
@@ -415,7 +386,7 @@ export default function LandingPage() {
                 </li>
               ))}
             </ul>
-            <button onClick={() => handleLogin(true)} className="btn-primary inline-flex items-center gap-2">
+            <button onClick={() => goToApp(true)} className="btn-primary inline-flex items-center gap-2">
               Experimentar agora <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -471,7 +442,7 @@ export default function LandingPage() {
                 <p className="text-blue-300 text-sm mb-3">
                   +3 vulnerabilidades ocultas — desbloqueie o relatório completo
                 </p>
-                <button onClick={() => handleLogin()} className="btn-primary text-sm py-2.5 px-6">
+                <button onClick={() => goToApp()} className="btn-primary text-sm py-2.5 px-6">
                   Ver relatório completo
                 </button>
               </div>
@@ -561,7 +532,7 @@ export default function LandingPage() {
                 ))}
               </ul>
               <button
-                onClick={() => handleLogin()}
+                onClick={() => goToApp()}
                 className={`w-full text-sm py-3 rounded-xl font-semibold transition-all ${
                   p.highlight
                     ? 'btn-primary shadow-lg shadow-blue-600/20'
@@ -593,7 +564,7 @@ export default function LandingPage() {
             Descubra se o seu é um deles — em 30 segundos.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button onClick={() => handleLogin(true)} className="btn-primary text-lg px-10 py-4 shadow-xl shadow-blue-600/20 flex items-center gap-2">
+            <button onClick={() => goToApp(true)} className="btn-primary text-lg px-10 py-4 shadow-xl shadow-blue-600/20 flex items-center gap-2">
               Analisar meu app agora
               <ArrowRight className="w-5 h-5" />
             </button>
