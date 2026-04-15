@@ -26,7 +26,9 @@ services:
         sync: false
       - key: FIREBASE_PRIVATE_KEY
         sync: false
-      - key: OPENAI_API_KEY
+      - key: CLOUDFLARE_AI_TOKEN
+        sync: false
+      - key: CLOUDFLARE_ACCOUNT_ID
         sync: false
       - key: FRONTEND_URL
         sync: false
@@ -52,5 +54,7 @@ services:
           property: connectionString
       - key: REDIS_URL
         sync: false
-      - key: OPENAI_API_KEY
+      - key: CLOUDFLARE_AI_TOKEN
+        sync: false
+      - key: CLOUDFLARE_ACCOUNT_ID
         sync: false
