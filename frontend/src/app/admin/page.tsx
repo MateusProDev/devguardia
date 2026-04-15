@@ -149,8 +149,15 @@ export default function AdminPage() {
     setLoginError('');
     try {
       await signInWithEmailAndPassword(auth, email, password);
-    } catch {
-      setLoginError('Email ou senha inválidos.');
+    } catch (err: any) {
+      const code = err?.code || '';
+      if (code === 'auth/operation-not-allowed') {
+        setLoginError('Email/Senha não habilitado no Firebase. Ative em: Firebase Console → Authentication → Sign-in method → Email/Password.');
+      } else if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
+        setLoginError('Email ou senha inválidos.');
+      } else {
+        setLoginError(`Erro: ${code || err?.message || 'desconhecido'}`);
+      }
     } finally {
       setLoginLoading(false);
     }
