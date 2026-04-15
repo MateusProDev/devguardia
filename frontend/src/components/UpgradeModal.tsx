@@ -35,8 +35,9 @@ const SINGLE_PRICE = 990;
 const SUB_PRICE = 1990;
 
 export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
-  const [step, setStep] = useState<Step>('choose-plan');
-  const [selectedType, setSelectedType] = useState<'SINGLE_SCAN' | 'SUBSCRIPTION' | null>(null);
+  const hasScanId = Boolean(scanId);
+  const [step, setStep] = useState<Step>(hasScanId ? 'choose-plan' : 'choose-method');
+  const [selectedType, setSelectedType] = useState<'SINGLE_SCAN' | 'SUBSCRIPTION' | null>(hasScanId ? null : 'SUBSCRIPTION');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -105,7 +106,9 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
 
   function goBack() {
     if (step === 'choose-method') {
-      setStep('choose-plan');
+      if (hasScanId) {
+        setStep('choose-plan');
+      }
     } else if (step === 'card' || step === 'pix') {
       if (pixPollRef.current) clearInterval(pixPollRef.current);
       setPixQrCode('');
