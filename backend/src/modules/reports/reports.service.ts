@@ -55,6 +55,21 @@ export class ReportsService {
       };
     }
 
+    const limitedVulns = scan.vulnerabilities
+      .filter((v) => v.isPublic)
+      .slice(0, 2)
+      .map((v) => ({
+        id: v.id,
+        title: v.title,
+        severity: v.severity,
+        description: v.description,
+        solution: null,
+        aiExplanation: null,
+        aiCodeFix: null,
+      }));
+
+    const isLimited = limitedVulns.length < scan.vulnerabilities.length;
+
     return {
       id: scan.id,
       url: scan.url,
@@ -62,20 +77,9 @@ export class ReportsService {
       score: scan.score,
       isPremium: scan.isPremium,
       createdAt: scan.createdAt,
-      isLimited: true,
+      isLimited,
       summary: counts,
-      vulnerabilities: scan.vulnerabilities
-        .filter((v) => v.isPublic)
-        .slice(0, 2)
-        .map((v) => ({
-          id: v.id,
-          title: v.title,
-          severity: v.severity,
-          description: v.description,
-          solution: null,
-          aiExplanation: null,
-          aiCodeFix: null,
-        })),
+      vulnerabilities: limitedVulns,
     };
   }
 }
