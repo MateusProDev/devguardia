@@ -159,10 +159,14 @@ export default function ReportPage() {
               <div className="flex items-start gap-3">
                 <Lock className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-blue-300">Vulnerabilidades encontradas</p>
+                  <p className="font-semibold text-blue-300">
+                    {report.vulnerabilities.length > 0 ? 'Relatório parcial' : 'Vulnerabilidades encontradas'}
+                  </p>
                   <p className="text-blue-400 text-sm">
-                    Foram encontradas {Object.values(report.summary || {}).reduce((a, b) => a + b, 0)} vulnerabilidades.
-                    Desbloqueie o relatório completo para ver os detalhes e as correções com IA.
+                    {report.vulnerabilities.length > 0
+                      ? `Você está vendo ${report.vulnerabilities.length} de ${Object.values(report.summary || {}).reduce((a, b) => a + b, 0)} vulnerabilidades. Desbloqueie para ver todas com correções e explicações de IA.`
+                      : `Foram encontradas ${Object.values(report.summary || {}).reduce((a, b) => a + b, 0)} vulnerabilidades. Desbloqueie o relatório completo para ver os detalhes e as correções com IA.`
+                    }
                   </p>
                 </div>
               </div>
@@ -178,10 +182,10 @@ export default function ReportPage() {
         )}
 
         {/* Vulnerabilities */}
-        {!isScanning && !report.isLimited && report.vulnerabilities.length > 0 && (
+        {!isScanning && report.vulnerabilities.length > 0 && (
           <VulnerabilityList
             vulnerabilities={report.vulnerabilities}
-            isLimited={false}
+            isLimited={report.isLimited}
             onUpgradeClick={() => setUpgradeOpen(true)}
           />
         )}

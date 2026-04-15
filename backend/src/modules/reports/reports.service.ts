@@ -55,6 +55,25 @@ export class ReportsService {
       };
     }
 
+    // Free users: show 2 vulns if score < 80, hide all if score >= 80
+    const score = scan.score ?? 0;
+    const showFreeVulns = score < 80;
+
+    const limitedVulns = showFreeVulns
+      ? scan.vulnerabilities
+          .filter((v) => v.isPublic)
+          .slice(0, 2)
+          .map((v) => ({
+            id: v.id,
+            title: v.title,
+            severity: v.severity,
+            description: v.description,
+            solution: null,
+            aiExplanation: null,
+            aiCodeFix: null,
+          }))
+      : [];
+
     return {
       id: scan.id,
       url: scan.url,
@@ -64,7 +83,7 @@ export class ReportsService {
       createdAt: scan.createdAt,
       isLimited: true,
       summary: counts,
-      vulnerabilities: [],
+      vulnerabilities: limitedVulns,
     };
   }
 }
