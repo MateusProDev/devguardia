@@ -11,6 +11,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { QueueModule } from './modules/queue/queue.module';
 import { AiModule } from './modules/ai/ai.module';
 import { VulnerabilitiesModule } from './modules/vulnerabilities/vulnerabilities.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { VulnerabilitiesModule } from './modules/vulnerabilities/vulnerabilities
     QueueModule,
     AiModule,
     VulnerabilitiesModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import PageTracker from '../components/PageTracker';
 
 export const metadata: Metadata = {
   title: 'DevGuard AI - Segurança para Apps Web',
@@ -14,7 +15,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <PageTracker />
+        {children}
+      </body>
     </html>
   );
 }

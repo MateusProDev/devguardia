@@ -69,4 +69,19 @@ export const api = {
 
   checkPaymentStatus: (paymentId: string) =>
     authFetch(`/payment/status/${paymentId}`),
+
+  // Admin
+  adminStats: () => authFetch('/admin/stats'),
+  adminUsers: (limit = 20) => authFetch(`/admin/users?limit=${limit}`),
+  adminScans: (limit = 20) => authFetch(`/admin/scans?limit=${limit}`),
+  adminPayments: (limit = 20) => authFetch(`/admin/payments?limit=${limit}`),
+  adminAnalytics: (days = 7) => authFetch(`/admin/analytics?days=${days}`),
+
+  // Tracking (no auth required)
+  trackPageView: (data: { path: string; sessionId: string; referrer?: string; userId?: string }) =>
+    fetch(`${BASE_URL}/api/admin/track`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).catch(() => {}),
 };
