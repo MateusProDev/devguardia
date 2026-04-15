@@ -159,10 +159,10 @@ export default function ReportPage() {
               <div className="flex items-start gap-3">
                 <Lock className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-blue-300">Relatório parcial</p>
+                  <p className="font-semibold text-blue-300">Vulnerabilidades encontradas</p>
                   <p className="text-blue-400 text-sm">
-                    Você está vendo apenas {report.vulnerabilities.length} de{' '}
-                    {Object.values(report.summary || {}).reduce((a, b) => a + b, 0)} vulnerabilidades.
+                    Foram encontradas {Object.values(report.summary || {}).reduce((a, b) => a + b, 0)} vulnerabilidades.
+                    Desbloqueie o relatório completo para ver os detalhes e as correções com IA.
                   </p>
                 </div>
               </div>
@@ -178,15 +178,15 @@ export default function ReportPage() {
         )}
 
         {/* Vulnerabilities */}
-        {!isScanning && report.vulnerabilities.length > 0 && (
+        {!isScanning && !report.isLimited && report.vulnerabilities.length > 0 && (
           <VulnerabilityList
             vulnerabilities={report.vulnerabilities}
-            isLimited={report.isLimited}
+            isLimited={false}
             onUpgradeClick={() => setUpgradeOpen(true)}
           />
         )}
 
-        {!isScanning && report.vulnerabilities.length === 0 && report.status === 'COMPLETED' && (
+        {!isScanning && !report.isLimited && report.vulnerabilities.length === 0 && report.status === 'COMPLETED' && (
           <div className="card text-center py-12">
             <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Nenhuma vulnerabilidade encontrada!</h3>

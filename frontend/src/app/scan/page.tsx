@@ -8,6 +8,7 @@ import { api } from '../../services/api';
 import { Shield, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import ScanConsentModal from '../../components/ScanConsentModal';
+import UpgradeModal from '../../components/UpgradeModal';
 
 const checks = [
   'Certificado SSL/TLS e HTTPS',
@@ -28,6 +29,7 @@ function ScanPageContent() {
   const [authChecked, setAuthChecked] = useState(false);
   const [showConsent, setShowConsent] = useState(false);
   const [consentText, setConsentText] = useState('');
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   useEffect(() => {
     const prefilledUrl = searchParams?.get('url') || '';
@@ -74,7 +76,11 @@ function ScanPageContent() {
       router.push(`/report/${scan.id}`);
     } catch (err: any) {
       setShowConsent(false);
-      setError(err.message || 'Erro ao iniciar scan. Tente novamente.');
+      if (err.message?.includes('Limite') || err.message?.includes('limite')) {
+        setShowUpgrade(true);
+      } else {
+        setError(err.message || 'Erro ao iniciar scan. Tente novamente.');
+      }
     } finally {
       setLoading(false);
     }
@@ -179,6 +185,10 @@ function ScanPageContent() {
           onAccept={handleConsentAccept}
           onCancel={() => setShowConsent(false)}
         />
+      )}
+
+      {showUpgrade && (
+        <UpgradeModal scanId="" onClose={() => setShowUpgrade(false)} />
       )}
     </div>
   );
