@@ -26,6 +26,11 @@ const scanProcessor = new ScanProcessor(prisma);
 
 const redisConnection = getRedisConnection();
 
+redisConnection.on('connect', () => console.log('[REDIS] Connected'));
+redisConnection.on('ready', () => console.log('[REDIS] Ready'));
+redisConnection.on('error', (err) => console.error('[REDIS] Error:', err.message));
+redisConnection.on('close', () => console.warn('[REDIS] Connection closed'));
+
 const worker = new Worker(
   'scan-queue',
   async (job) => {
@@ -37,6 +42,8 @@ const worker = new Worker(
   {
     connection: redisConnection,
     concurrency: 2,
+    stalledInterval: 30000,
+    lockDuration: 120000,
   },
 );
 

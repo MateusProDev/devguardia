@@ -40,6 +40,8 @@ services:
         sync: false
       - key: ADMIN_EMAILS
         sync: false
+      - key: WORKER_URL
+        value: https://devguard-worker.onrender.com
 
   - type: web
     name: devguard-worker

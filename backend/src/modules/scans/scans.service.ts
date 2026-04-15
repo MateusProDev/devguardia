@@ -103,6 +103,19 @@ export class ScansService {
     if (!scan) throw new NotFoundException('Scan não encontrado.');
     if (scan.userId !== userId) throw new ForbiddenException('Acesso negado.');
 
+    // Auto-fail stuck scans (QUEUED/RUNNING for more than 2 minutes)
+    if (
+      (scan.status === 'QUEUED' || scan.status === 'RUNNING') &&
+      Date.now() - scan.createdAt.getTime() > 2 * 60 * 1000
+    ) {
+      await this.prisma.scan.update({
+        where: { id },
+        data: { status: 'FAILED', errorMsg: 'Scan expirou. O worker pode estar indisponível. Tente novamente.' },
+      });
+      scan.status = 'FAILED';
+      (scan as any).errorMsg = 'Scan expirou. O worker pode estar indisponível. Tente novamente.';
+    }
+
     const hasSub = await this.usersService.hasActiveSubscription(userId);
     const isPremiumUnlocked = scan.isPremium || hasSub;
 

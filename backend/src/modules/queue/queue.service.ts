@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import Redis from 'ioredis';
 
@@ -24,6 +24,7 @@ function getRedisConnection(): Redis {
 
 @Injectable()
 export class QueueService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(QueueService.name);
   private scanQueue!: Queue;
   private redisConnection!: Redis;
 
@@ -39,7 +40,25 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     await this.redisConnection?.quit();
   }
 
+  /** Wake up the worker on Render free tier by hitting its health endpoint */
+  private async wakeWorker() {
+    const workerUrl = process.env.WORKER_URL;
+    if (!workerUrl) return;
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      await fetch(`${workerUrl}/health`, { signal: controller.signal });
+      clearTimeout(timeout);
+      this.logger.log('Worker wake-up ping sent');
+    } catch {
+      this.logger.warn('Worker wake-up ping failed (may be starting up)');
+    }
+  }
+
   async addScanJob(scanId: string) {
+    // Wake up worker before adding job (Render free tier sleeps after 15min)
+    await this.wakeWorker();
+
     await this.scanQueue.add(
       'process-scan',
       { scanId },
@@ -50,5 +69,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
         removeOnFail: 50,
       },
     );
+
+    this.logger.log(`Scan job queued: ${scanId}`);
   }
 }
