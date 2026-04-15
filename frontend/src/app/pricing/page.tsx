@@ -111,7 +111,7 @@ const plans = [
   },
   {
     name: 'Assinatura',
-    price: 'R$19,90',
+    price: 'R$39,90',
     period: '/mês',
     description: 'Para projetos em andamento',
     highlight: true,

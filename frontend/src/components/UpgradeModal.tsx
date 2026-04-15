@@ -32,7 +32,7 @@ interface Props {
 type Step = 'choose-plan' | 'choose-method' | 'card' | 'pix';
 
 const SINGLE_PRICE = 990;
-const SUB_PRICE = 1990;
+const SUB_PRICE = 3990;
 
 export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
   const hasScanId = Boolean(scanId);
@@ -295,7 +295,7 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
     }
   }
 
-  const priceLabel = selectedType === 'SINGLE_SCAN' ? '9,90' : '19,90';
+  const priceLabel = selectedType === 'SINGLE_SCAN' ? '9,90' : '39,90';
   const planLabel = selectedType === 'SINGLE_SCAN' ? 'Scan Avulso' : 'Assinatura Mensal';
 
   const stepTitle: Record<Step, string> = {
@@ -397,7 +397,7 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
                       <p className="text-gray-400 text-sm">Scans ilimitados por 30 dias</p>
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-white">R$19,90</span>
+                  <span className="text-2xl font-bold text-white">R$39,90</span>
                 </div>
                 <ul className="space-y-1.5">
                   {['Tudo do Scan Avulso', 'Scans ilimitados', 'Acesso a todos os relatórios', 'Novos checks automáticos'].map((f) => (

@@ -11,7 +11,7 @@ import { CreatePixPaymentDto } from './dto/create-pix-payment.dto';
 import * as crypto from 'crypto';
 
 const SINGLE_SCAN_PRICE = parseInt(process.env.SINGLE_SCAN_PRICE || '990');
-const SUBSCRIPTION_PRICE = parseInt(process.env.SUBSCRIPTION_PRICE || '1990');
+const SUBSCRIPTION_PRICE = parseInt(process.env.SUBSCRIPTION_PRICE || '3990');
 const MERCADOPAGO_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
 const API_BASE = 'https://api.mercadopago.com';
 

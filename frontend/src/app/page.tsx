@@ -735,7 +735,7 @@ const plans = [
   },
   {
     name: 'Assinatura Pro',
-    price: 'R$19,90',
+    price: 'R$39,90',
     period: '/mês',
     highlight: true,
     cta: 'Assinar agora',
