@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import {
   Shield,
   Zap,
@@ -88,6 +89,52 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white overflow-x-hidden">
+      {/* JSON-LD Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'DevGuard AI',
+            applicationCategory: 'SecurityApplication',
+            operatingSystem: 'Web',
+            description:
+              'Scanner de vulnerabilidades com inteligência artificial para aplicações web. Detecte falhas de segurança em segundos.',
+            url: 'https://app.devguardia.cloud',
+            offers: [
+              {
+                '@type': 'Offer',
+                price: '0',
+                priceCurrency: 'BRL',
+                name: 'Gratuito',
+                description: '1 scan por dia com score de segurança',
+              },
+              {
+                '@type': 'Offer',
+                price: '9.90',
+                priceCurrency: 'BRL',
+                name: 'Scan Completo',
+                description: 'Relatório completo com todas as vulnerabilidades e correções com IA',
+              },
+              {
+                '@type': 'Offer',
+                price: '39.90',
+                priceCurrency: 'BRL',
+                name: 'Assinatura Pro',
+                description: 'Scans ilimitados com relatórios completos e prioridade na fila',
+              },
+            ],
+            aggregateRating: {
+              '@type': 'AggregateRating',
+              ratingValue: '4.9',
+              ratingCount: '3200',
+              bestRating: '5',
+            },
+          }),
+        }}
+      />
+
       {/* ═══════ NAVBAR ═══════ */}
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -98,10 +145,7 @@ export default function LandingPage() {
       >
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="relative">
-              <Shield className="w-8 h-8 text-blue-500" />
-              <div className="absolute inset-0 w-8 h-8 bg-blue-500/20 blur-lg rounded-full" />
-            </div>
+            <Image src="/favicon-96x96.png" alt="DevGuard AI" width={32} height={32} className="rounded-md" />
             <span className="font-bold text-xl tracking-tight">
               Dev<span className="text-blue-500">Guard</span> AI
             </span>
@@ -582,7 +626,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
             <div className="md:col-span-2">
               <div className="flex items-center gap-2.5 mb-4">
-                <Shield className="w-6 h-6 text-blue-500" />
+                <Image src="/favicon-32x32.png" alt="DevGuard AI" width={24} height={24} className="rounded-sm" />
                 <span className="font-bold text-lg">
                   Dev<span className="text-blue-500">Guard</span> AI
                 </span>
