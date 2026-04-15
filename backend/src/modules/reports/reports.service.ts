@@ -43,9 +43,15 @@ export class ReportsService {
 
     if (isUnlocked) {
       return {
-        ...scan,
+        id: scan.id,
+        url: scan.url,
+        status: scan.status,
+        score: scan.score,
+        isPremium: scan.isPremium,
+        createdAt: scan.createdAt,
         isLimited: false,
         summary: counts,
+        vulnerabilities: scan.vulnerabilities,
       };
     }
 
