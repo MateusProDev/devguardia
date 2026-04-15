@@ -26,7 +26,7 @@ const nextConfig = {
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: https: blob:",
               "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://api.devguardia.cloud https://identitytoolkit.googleapis.com https://securetoken.googleapis.com wss://*.firebaseio.com https://api.mercadopago.com https://sdk.mercadopago.com https://http2.mlstatic.com https://*.mercadolibre.com https://api.mercadolibre.com https://vercel.live",
-              "frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://*.googleapis.com https://*.mercadopago.com https://*.mercadolibre.com",
+              "frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://*.googleapis.com https://*.mercadopago.com https://*.mercadolibre.com https://vercel.live",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",
