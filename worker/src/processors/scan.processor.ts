@@ -80,8 +80,8 @@ export class ScanProcessor {
             severity: v.severity,
             description: v.description,
             solution: v.solution,
-            aiExplanation: v.aiExplanation,
-            aiCodeFix: v.aiCodeFix,
+            aiExplanation: typeof v.aiExplanation === 'string' ? v.aiExplanation : v.aiExplanation ? JSON.stringify(v.aiExplanation) : null,
+            aiCodeFix: typeof v.aiCodeFix === 'string' ? v.aiCodeFix : v.aiCodeFix ? JSON.stringify(v.aiCodeFix) : null,
             isPublic: i < 2,
           })),
         });

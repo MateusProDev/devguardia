@@ -73,9 +73,13 @@ Responda APENAS com JSON válido (sem markdown, sem texto antes ou depois):
         ? content.explanation
         : null;
 
+      const codeFix = content.codeFix
+        ? typeof content.codeFix === 'string' ? content.codeFix : JSON.stringify(content.codeFix)
+        : null;
+
       return {
-        explanation,
-        codeFix: content.codeFix || null,
+        explanation: typeof explanation === 'string' ? explanation : null,
+        codeFix,
       };
     } catch (err) {
       console.warn(`[AI] Error enriching "${vuln.title}": ${err}`);
