@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import { Shield, CheckCircle2 } from 'lucide-react';
 
 export default function PricingPage() {
@@ -8,7 +8,7 @@ export default function PricingPage() {
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <Shield className="w-6 h-6 text-blue-500" />
-            <span className="font-bold text-lg">DevGuard AI</span>
+            <span className="font-bold text-lg">DevGuard IA</span>
           </Link>
           <Link href="/" className="text-gray-400 hover:text-white text-sm">
             ← Início

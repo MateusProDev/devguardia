@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
@@ -82,9 +82,9 @@ export default function LandingPage() {
   }
 
   const stats = {
-    scans: useCounter(12847),
-    vulns: useCounter(54230),
-    users: useCounter(3200),
+    scans: useCounter(74),
+    vulns: useCounter(312),
+    users: useCounter(23),
   };
 
   return (
@@ -96,7 +96,7 @@ export default function LandingPage() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'SoftwareApplication',
-            name: 'DevGuard AI',
+            name: 'DevGuard IA',
             applicationCategory: 'SecurityApplication',
             operatingSystem: 'Web',
             description:
@@ -125,12 +125,6 @@ export default function LandingPage() {
                 description: 'Scans ilimitados com relatórios completos e prioridade na fila',
               },
             ],
-            aggregateRating: {
-              '@type': 'AggregateRating',
-              ratingValue: '4.9',
-              ratingCount: '3200',
-              bestRating: '5',
-            },
           }),
         }}
       />
@@ -145,9 +139,9 @@ export default function LandingPage() {
       >
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Image src="/favicon-96x96.png" alt="DevGuard AI" width={32} height={32} className="rounded-md" />
+            <Image src="/favicon-96x96.png" alt="DevGuard IA" width={32} height={32} className="rounded-md" />
             <span className="font-bold text-xl tracking-tight">
-              Dev<span className="text-blue-500">Guard</span> AI
+              Dev<span className="text-blue-500">Guard</span> IA
             </span>
           </div>
 
@@ -286,7 +280,7 @@ export default function LandingPage() {
               Confiado por devs e startups
             </p>
             <div className="flex flex-wrap items-center justify-center gap-8 opacity-40">
-              {['Next.js', 'Vercel', 'Railway', 'Supabase', 'Firebase'].map((name) => (
+              {['Next.js', 'Vercel', 'Railway', 'Supabase', 'Firebase', 'Cloudflare', 'Upstash'].map((name) => (
                 <span key={name} className="text-gray-400 font-semibold text-lg tracking-wide">
                   {name}
                 </span>
@@ -626,9 +620,9 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
             <div className="md:col-span-2">
               <div className="flex items-center gap-2.5 mb-4">
-                <Image src="/favicon-32x32.png" alt="DevGuard AI" width={24} height={24} className="rounded-sm" />
+                <Image src="/favicon-32x32.png" alt="DevGuard IA" width={24} height={24} className="rounded-sm" />
                 <span className="font-bold text-lg">
-                  Dev<span className="text-blue-500">Guard</span> AI
+                  Dev<span className="text-blue-500">Guard</span> IA
                 </span>
               </div>
               <p className="text-gray-500 text-sm max-w-sm leading-relaxed">
@@ -653,7 +647,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="border-t border-gray-800/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-gray-600 text-sm">© 2026 DevGuard AI. Todos os direitos reservados.</p>
+            <p className="text-gray-600 text-sm">© 2026 DevGuard IA. Todos os direitos reservados.</p>
             <p className="text-gray-600 text-xs flex items-center gap-1.5">
               Feito com <ShieldCheck className="w-3.5 h-3.5 text-blue-500" /> para devs que se importam com segurança
             </p>
@@ -730,7 +724,7 @@ const testimonials = [
   {
     name: 'Lucas Oliveira',
     role: 'CTO @ TechStartup',
-    quote: 'Encontramos 3 vulnerabilidades críticas no nosso SaaS antes de lançar. O DevGuard AI literalmente salvou nosso produto.',
+    quote: 'Encontramos 3 vulnerabilidades críticas no nosso SaaS antes de lançar. O DevGuard IA literalmente salvou nosso produto.',
   },
   {
     name: 'Marina Santos',

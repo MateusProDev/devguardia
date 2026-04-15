@@ -1,6 +1,6 @@
-{
-  "name": "DevGuard AI - Segurança para Apps Web",
-  "short_name": "DevGuard AI",
+﻿{
+  "name": "DevGuard IA - Segurança para Apps Web",
+  "short_name": "DevGuard IA",
   "description": "Scanner de vulnerabilidades com IA para aplicações web. Detecte falhas de segurança em segundos.",
   "start_url": "/",
   "display": "standalone",

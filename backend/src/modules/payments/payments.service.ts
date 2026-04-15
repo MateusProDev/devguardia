@@ -63,8 +63,9 @@ export class PaymentsService {
         email: dto.email,
       },
       external_reference: payment.id,
-      notification_url: `${process.env.BACKEND_URL || 'http://localhost:3001'}/api/payment/webhook`,
-      statement_descriptor: 'DEVGUARDAI',
+      notification_url: `${process.env.BACKEND_URL || 'http://localhost:3001'}/api/payment/webhook?source_news=webhooks`,
+      statement_descriptor: 'DEVGUARDIA',
+      binary_mode: true,
     };
 
     const controller = new AbortController();
@@ -160,8 +161,8 @@ export class PaymentsService {
         },
       },
       external_reference: payment.id,
-      notification_url: `${process.env.BACKEND_URL || 'http://localhost:3001'}/api/payment/webhook`,
-      statement_descriptor: 'DEVGUARDAI',
+      notification_url: `${process.env.BACKEND_URL || 'http://localhost:3001'}/api/payment/webhook?source_news=webhooks`,
+      statement_descriptor: 'DEVGUARDIA',
     };
 
     const controller = new AbortController();
@@ -265,13 +266,21 @@ export class PaymentsService {
   }
 
   async getInstallments(amount: number, bin: string) {
+    const cleanBin = (bin || '').replace(/\D/g, '');
+    if (cleanBin.length < 6 || cleanBin.length > 8) {
+      throw new BadRequestException('BIN inválido.');
+    }
+    if (isNaN(amount) || amount <= 0) {
+      throw new BadRequestException('Valor inválido.');
+    }
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
 
     try {
       const url = new URL(`${API_BASE}/v1/payment_methods/installments`);
       url.searchParams.set('amount', String(amount / 100));
-      url.searchParams.set('bin', bin);
+      url.searchParams.set('bin', cleanBin);
       url.searchParams.set('processing_mode', 'aggregator');
 
       const response = await fetch(url.toString(), {
@@ -289,7 +298,12 @@ export class PaymentsService {
     }
   }
 
-  async handleWebhook(body: any, signature: string) {
+  async handleWebhook(
+    body: any,
+    query: Record<string, string>,
+    xSignature: string,
+    xRequestId: string,
+  ) {
     const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET || '';
 
     if (!secret) {
@@ -297,20 +311,63 @@ export class PaymentsService {
       throw new BadRequestException('Webhook authentication not configured');
     }
 
-    const hash = crypto
+    // ── Validate x-signature per Mercado Pago docs ──
+    // Format: ts=TIMESTAMP,v1=HASH
+    const sigParts: Record<string, string> = {};
+    (xSignature || '').split(',').forEach((part) => {
+      const [key, ...rest] = part.split('=');
+      if (key && rest.length) {
+        sigParts[key.trim()] = rest.join('=').trim();
+      }
+    });
+
+    const ts = sigParts['ts'];
+    const v1 = sigParts['v1'];
+
+    if (!ts || !v1) {
+      this.logger.warn('Webhook missing ts or v1 in x-signature');
+      return { received: false };
+    }
+
+    // Reject if timestamp is older than 5 minutes (replay attack protection)
+    const tsMs = parseInt(ts, 10) * 1000;
+    if (isNaN(tsMs) || Math.abs(Date.now() - tsMs) > 5 * 60 * 1000) {
+      this.logger.warn(`Webhook timestamp too old or invalid: ${ts}`);
+      return { received: false };
+    }
+
+    // Build manifest string per MP docs:
+    // id:[data.id_query];request-id:[x-request-id_header];ts:[ts_header];
+    const dataId = query['data.id'] || '';
+    const manifestParts: string[] = [];
+    if (dataId) manifestParts.push(`id:${dataId}`);
+    if (xRequestId) manifestParts.push(`request-id:${xRequestId}`);
+    if (ts) manifestParts.push(`ts:${ts}`);
+    const manifest = manifestParts.join(';') + ';';
+
+    const expectedHash = crypto
       .createHmac('sha256', secret)
-      .update(JSON.stringify(body))
+      .update(manifest)
       .digest('hex');
-    const sig = signature || '';
-    if (hash.length !== sig.length || !crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(sig))) {
+
+    // Timing-safe comparison
+    if (
+      expectedHash.length !== v1.length ||
+      !crypto.timingSafeEqual(Buffer.from(expectedHash, 'hex'), Buffer.from(v1, 'hex'))
+    ) {
       this.logger.warn('Invalid webhook signature');
       return { received: false };
     }
 
+    // ── Process notification ──
     const { type, data } = body;
 
     if (type === 'payment' && data?.id) {
-      await this.processPaymentNotification(data.id);
+      // Sanitize: data.id must be numeric
+      const mpId = String(data.id).replace(/\D/g, '');
+      if (mpId) {
+        await this.processPaymentNotification(mpId);
+      }
     }
 
     return { received: true };

@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from 'next';
+﻿import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import PageTracker from '../components/PageTracker';
 
@@ -6,8 +6,8 @@ const siteUrl = 'https://app.devguardia.cloud';
 
 export const metadata: Metadata = {
   title: {
-    default: 'DevGuard AI — Scanner de Vulnerabilidades com IA para Apps Web',
-    template: '%s | DevGuard AI',
+    default: 'DevGuard IA — Scanner de Vulnerabilidades com IA para Apps Web',
+    template: '%s | DevGuard IA',
   },
   description:
     'Detecte vulnerabilidades críticas, headers ausentes, portas expostas e falhas de segurança em seu site ou API. Análise automatizada com inteligência artificial em menos de 30 segundos.',
@@ -21,16 +21,16 @@ export const metadata: Metadata = {
     'SSL TLS',
     'XSS',
     'SQL Injection',
-    'DevGuard AI',
+    'DevGuard IA',
     'scan de segurança',
     'vulnerabilidades web',
     'segurança de aplicações',
     'segurança de API',
     'teste de invasão',
   ],
-  authors: [{ name: 'DevGuard AI' }],
-  creator: 'DevGuard AI',
-  publisher: 'DevGuard AI',
+  authors: [{ name: 'DevGuard IA' }],
+  creator: 'DevGuard IA',
+  publisher: 'DevGuard IA',
   metadataBase: new URL(siteUrl),
   alternates: {
     canonical: '/',
@@ -39,8 +39,8 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'pt_BR',
     url: siteUrl,
-    siteName: 'DevGuard AI',
-    title: 'DevGuard AI — Scanner de Vulnerabilidades com IA',
+    siteName: 'DevGuard IA',
+    title: 'DevGuard IA — Scanner de Vulnerabilidades com IA',
     description:
       'Detecte vulnerabilidades críticas em seu app web em menos de 30 segundos. Headers, portas, SSL, OWASP e mais — com correções geradas por IA.',
     images: [
@@ -48,13 +48,13 @@ export const metadata: Metadata = {
         url: '/hero.png',
         width: 1200,
         height: 630,
-        alt: 'DevGuard AI - Scanner de Vulnerabilidades',
+        alt: 'DevGuard IA - Scanner de Vulnerabilidades',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'DevGuard AI — Scanner de Vulnerabilidades com IA',
+    title: 'DevGuard IA — Scanner de Vulnerabilidades com IA',
     description:
       'Detecte vulnerabilidades críticas em seu app web em menos de 30 segundos. Análise automatizada com IA.',
     images: ['/hero.png'],

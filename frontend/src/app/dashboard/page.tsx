@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -76,7 +76,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="text-center">
           <Shield className="w-16 h-16 text-blue-500 mx-auto mb-6" />
-          <h1 className="text-2xl font-bold mb-2">DevGuard AI</h1>
+          <h1 className="text-2xl font-bold mb-2">DevGuard IA</h1>
           <p className="text-gray-400 mb-8">Faça login para acessar o painel</p>
           <button
             onClick={handleLogin}
@@ -107,7 +107,7 @@ export default function DashboardPage() {
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 flex-shrink-0">
             <Shield className="w-6 h-6 text-blue-500" />
-            <span className="font-bold text-lg">DevGuard AI</span>
+            <span className="font-bold text-lg">DevGuard IA</span>
           </div>
           <div className="flex items-center gap-3 min-w-0">
             <span className="text-gray-400 text-sm truncate hidden sm:block">{user?.email}</span>

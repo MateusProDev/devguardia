@@ -100,7 +100,7 @@ function ScanPageContent() {
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
             <Shield className="w-6 h-6 text-blue-500" />
-            <span className="font-bold text-lg">DevGuard AI</span>
+            <span className="font-bold text-lg">DevGuard IA</span>
           </Link>
           <Link href="/dashboard" className="text-gray-400 hover:text-white text-sm transition-colors">
             &larr; Dashboard

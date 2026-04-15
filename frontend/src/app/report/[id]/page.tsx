@@ -110,7 +110,7 @@ export default function ReportPage() {
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
             <Shield className="w-6 h-6 text-blue-500" />
-            <span className="font-bold">DevGuard AI</span>
+            <span className="font-bold">DevGuard IA</span>
           </Link>
           <Link href="/dashboard" className="text-gray-400 hover:text-white text-sm">
             ← Dashboard

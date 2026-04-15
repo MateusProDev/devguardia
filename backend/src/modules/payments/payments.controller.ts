@@ -10,6 +10,7 @@ import {
   Headers,
   HttpCode,
 } from '@nestjs/common';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { FirebaseAuthGuard } from '../../common/guards/firebase-auth.guard';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -26,12 +27,14 @@ export class PaymentsController {
 
   @Post('process')
   @UseGuards(FirebaseAuthGuard)
+  @Throttle({ short: { ttl: 10000, limit: 3 } })
   async processPayment(@Req() req: any, @Body() dto: CreatePaymentDto) {
     return this.paymentsService.processCardPayment(req.user.id, dto);
   }
 
   @Post('pix')
   @UseGuards(FirebaseAuthGuard)
+  @Throttle({ short: { ttl: 10000, limit: 3 } })
   async processPixPayment(@Req() req: any, @Body() dto: CreatePixPaymentDto) {
     return this.paymentsService.processPixPayment(req.user.id, dto);
   }
@@ -52,11 +55,14 @@ export class PaymentsController {
   }
 
   @Post('webhook')
+  @SkipThrottle()
   @HttpCode(200)
   async webhook(
     @Body() body: any,
-    @Headers('x-signature') signature: string,
+    @Query() query: Record<string, string>,
+    @Headers('x-signature') xSignature: string,
+    @Headers('x-request-id') xRequestId: string,
   ) {
-    return this.paymentsService.handleWebhook(body, signature);
+    return this.paymentsService.handleWebhook(body, query, xSignature, xRequestId);
   }
 }
