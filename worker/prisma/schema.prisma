@@ -48,7 +48,7 @@ model Scan {
 
   user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   vulnerabilities Vulnerability[]
-  payment         Payment?
+  payments        Payment[]
   consent         ScanConsent?
 
   @@index([userId, createdAt])
@@ -96,7 +96,7 @@ enum PaymentType {
 model Payment {
   id            String        @id @default(cuid())
   userId        String
-  scanId        String?       @unique
+  scanId        String?
   mercadoPagoId String?       @unique
   preferenceId  String?
   status        PaymentStatus @default(PENDING)
@@ -109,6 +109,7 @@ model Payment {
   scan Scan? @relation(fields: [scanId], references: [id])
 
   @@index([userId])
+  @@index([scanId])
   @@index([mercadoPagoId])
 }
 

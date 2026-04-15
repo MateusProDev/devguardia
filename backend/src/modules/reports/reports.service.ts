@@ -16,7 +16,10 @@ export class ReportsService {
         vulnerabilities: {
           orderBy: [{ severity: 'asc' }, { createdAt: 'asc' }],
         },
-        payment: true,
+        payments: {
+          where: { status: 'APPROVED' },
+          take: 1,
+        },
       },
     });
 
@@ -24,7 +27,7 @@ export class ReportsService {
     if (scan.userId !== userId) throw new ForbiddenException('Acesso negado.');
 
     const hasSub = await this.usersService.hasActiveSubscription(userId);
-    const isPaid = scan.payment?.status === 'APPROVED';
+    const isPaid = scan.payments.length > 0;
     const isUnlocked = hasSub || isPaid || scan.isPremium;
 
     const counts = {
