@@ -56,20 +56,20 @@ export class ScanProcessor {
       console.log(`[SCAN ${scanId}] Total vulns: ${allVulns.length}, Score: ${score}`);
       console.log(`[SCAN ${scanId}] Severity breakdown: CRITICAL=${allVulns.filter((v) => v.severity === 'CRITICAL').length} HIGH=${allVulns.filter((v) => v.severity === 'HIGH').length} MEDIUM=${allVulns.filter((v) => v.severity === 'MEDIUM').length} LOW=${allVulns.filter((v) => v.severity === 'LOW').length} INFO=${allVulns.filter((v) => v.severity === 'INFO').length}`);
 
-      // Enrich first 3 vulnerabilities with AI (to control costs)
+      // Enrich CRITICAL, HIGH, MEDIUM vulns with AI
       const aiStart = Date.now();
       const enriched = await Promise.all(
-        allVulns.slice(0, 3).map(async (v, i) => {
-          const ai = await this.aiService.explain(v);
-          return { ...v, aiExplanation: ai.explanation, aiCodeFix: ai.codeFix };
+        allVulns.map(async (v) => {
+          if (["CRITICAL", "HIGH", "MEDIUM"].includes(v.severity)) {
+            const ai = await this.aiService.explain(v);
+            return { ...v, aiExplanation: ai.explanation, aiCodeFix: ai.codeFix };
+          }
+          return { ...v, aiExplanation: null, aiCodeFix: null };
         }),
       );
       console.log(`[SCAN ${scanId}] AI enrichment finished in ${Date.now() - aiStart}ms`);
 
-      const finalVulns = [
-        ...enriched,
-        ...allVulns.slice(3).map((v) => ({ ...v, aiExplanation: null, aiCodeFix: null })),
-      ];
+      const finalVulns = enriched;
 
       await this.prisma.$transaction(async (tx) => {
         await tx.vulnerability.deleteMany({ where: { scanId } });
