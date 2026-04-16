@@ -39,26 +39,33 @@ function useCounter(end: number, duration = 2000) {
           const step = end / (duration / 16);
           const timer = setInterval(() => {
             start += step;
-            if (start >= end) {
-              setCount(end);
-              clearInterval(timer);
-            } else {
-              setCount(Math.floor(start));
-            }
-          }, 16);
+    function goToApp(withUrl = false) {
+      if (withUrl && demoUrl) {
+        let url = demoUrl.trim();
+        if (!/^https?:\/\//i.test(url)) {
+          url = 'https://' + url;
+        }
+        window.location.href = `${APP_URL}/scan?url=${encodeURIComponent(url)}`;
+      } else {
+        window.location.href = `${APP_URL}/dashboard`;
+      }
+    }
           observer.disconnect();
         }
       },
       { threshold: 0.3 }
     );
     if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [end, duration]);
-  return { count, ref };
-}
-
-const APP_URL =
-  typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+              <input
+                type="text"
+                value={demoUrl}
+                onChange={(e) => setDemoUrl(e.target.value)}
+                placeholder="seudominio.com.br"
+                className="w-full bg-transparent text-white placeholder-gray-500 pl-12 pr-4 py-4 outline-none text-lg"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
+              />
     ? 'https://app.devguardia.cloud'
     : '';
 
@@ -243,7 +250,7 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-12 animate-slide-up animation-delay-100 leading-relaxed">
-            A maioria dos apps tem falhas críticas escondidas. Basta uma pra causar prejuízo. Teste agora mesmo!
+            Quase todo app tem falhas críticas ocultas. Uma só pode causar prejuízo. Descubra antes dos hackers!
           </p>
 
           {/* CTA Input */}
