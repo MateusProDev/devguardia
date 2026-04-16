@@ -224,11 +224,11 @@ export default function LandingPage() {
 
           {/* Main heading */}
           <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-[1.05] mb-8 animate-slide-up">
-            Hackers não avisam — eles exploram.
+            Hackers não avisam — 
             <br />
             <span className="relative">
               <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-cyan-400 bg-clip-text text-transparent">
-                Você pode estar expondo dados sem saber.
+               eles exploram.
               </span>
               <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none">
                 <path d="M2 10C50 4 100 2 150 6C200 10 250 4 298 8" stroke="url(#underline-gradient)" strokeWidth="3" strokeLinecap="round" />
@@ -243,7 +243,7 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-12 animate-slide-up animation-delay-100 leading-relaxed">
-            A maioria dos apps tem falhas críticas escondidas. Basta uma pra causar prejuízo.
+            A maioria dos apps tem falhas críticas escondidas. Basta uma pra causar prejuízo. Teste agora mesmo!
           </p>
 
           {/* CTA Input */}
