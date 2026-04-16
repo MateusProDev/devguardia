@@ -243,7 +243,7 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-12 animate-slide-up animation-delay-100 leading-relaxed">
-            Seu site pode estar exposto a ataques, vazamentos e prejuízos. Descubra falhas de segurança antes que alguém explore. <span className="text-gray-300">Proteja seu produto antes de ser tarde demais.</span>
+            Descubra falhas de segurança antes dos hackers.
           </p>
 
           {/* CTA Input */}
