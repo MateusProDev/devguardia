@@ -1,8 +1,8 @@
-﻿const APP_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+﻿
+"use client";
+const APP_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
   ? 'https://app.devguardia.cloud'
   : '';
-
-"use client";
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
