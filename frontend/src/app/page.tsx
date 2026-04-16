@@ -1,4 +1,7 @@
-﻿'use client';
+﻿const APP_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+  ? 'https://app.devguardia.cloud'
+  : '';
+'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
@@ -39,35 +42,23 @@ function useCounter(end: number, duration = 2000) {
           const step = end / (duration / 16);
           const timer = setInterval(() => {
             start += step;
-    function goToApp(withUrl = false) {
-      if (withUrl && demoUrl) {
-        let url = demoUrl.trim();
-        if (!/^https?:\/\//i.test(url)) {
-          url = 'https://' + url;
-        }
-        window.location.href = `${APP_URL}/scan?url=${encodeURIComponent(url)}`;
-      } else {
-        window.location.href = `${APP_URL}/dashboard`;
-      }
-    }
+            if (start >= end) {
+              setCount(end);
+              clearInterval(timer);
+            } else {
+              setCount(Math.floor(start));
+            }
+          }, 16);
           observer.disconnect();
         }
       },
       { threshold: 0.3 }
     );
     if (ref.current) observer.observe(ref.current);
-              <input
-                type="text"
-                value={demoUrl}
-                onChange={(e) => setDemoUrl(e.target.value)}
-                placeholder="seudominio.com.br"
-                className="w-full bg-transparent text-white placeholder-gray-500 pl-12 pr-4 py-4 outline-none text-lg"
-                autoCorrect="off"
-                autoCapitalize="none"
-                spellCheck={false}
-              />
-    ? 'https://app.devguardia.cloud'
-    : '';
+    return () => observer.disconnect();
+  }, [end, duration]);
+  return { count, ref };
+}
 
 export default function LandingPage() {
   const [demoUrl, setDemoUrl] = useState('');
