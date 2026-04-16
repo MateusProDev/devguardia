@@ -219,16 +219,16 @@ export default function LandingPage() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500" />
             </span>
-            Análise de segurança com IA em menos de 30 segundos
+            Seu app pode estar vulnerável agora. Descubra antes dos hackers.
           </div>
 
           {/* Main heading */}
           <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-[1.05] mb-8 animate-slide-up">
-            Seu app está
+            Pronto para lançar seu app?
             <br />
             <span className="relative">
               <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-cyan-400 bg-clip-text text-transparent">
-                realmente seguro?
+                Não arrisque sua reputação.
               </span>
               <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none">
                 <path d="M2 10C50 4 100 2 150 6C200 10 250 4 298 8" stroke="url(#underline-gradient)" strokeWidth="3" strokeLinecap="round" />
@@ -243,8 +243,7 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-12 animate-slide-up animation-delay-100 leading-relaxed">
-            Detecte vulnerabilidades críticas, headers ausentes, portas expostas e falhas de configuração.{' '}
-            <span className="text-gray-300">Proteja seu produto antes de ir ao ar.</span>
+            Seu site pode estar exposto a ataques, vazamentos e prejuízos. Descubra falhas de segurança antes que alguém explore. <span className="text-gray-300">Proteja seu produto antes de ser tarde demais.</span>
           </p>
 
           {/* CTA Input */}
@@ -264,13 +263,13 @@ export default function LandingPage() {
                 onClick={() => goToApp(true)}
                 className="btn-primary flex items-center justify-center gap-2 whitespace-nowrap text-base px-8 py-4 shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 transition-all"
               >
-                Analisar grátis
+                Checar meu app agora
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>
             <p className="text-gray-500 text-sm mt-4 flex items-center justify-center gap-2">
               <ShieldCheck className="w-4 h-4 text-green-500/70" />
-              1 scan gratuito por dia — sem cartão de crédito
+              1 scan gratuito por dia — sem cartão, sem risco
             </p>
           </div>
 
@@ -325,16 +324,13 @@ export default function LandingPage() {
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 text-blue-400 text-sm font-medium mb-4">
             <Eye className="w-4 h-4" />
-            ANÁLISE COMPLETA
+            RISCO ESCONDIDO
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
-            Tudo que analisamos em{' '}
-            <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              cada scan
-            </span>
+            O que pode estar vulnerável no seu app?
           </h2>
           <p className="text-gray-400 max-w-xl mx-auto">
-            Uma análise profunda em múltiplas camadas de segurança do seu aplicativo web.
+            Falhas que hackers exploram passam despercebidas por quem não é especialista. Não teste no escuro.
           </p>
         </div>
 
@@ -363,13 +359,13 @@ export default function LandingPage() {
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 text-cyan-400 text-sm font-medium mb-4">
               <Terminal className="w-4 h-4" />
-              COMO FUNCIONA
+              COMO EVITAR UM DESASTRE
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
-              3 passos simples
+              3 passos para não ser pego de surpresa
             </h2>
             <p className="text-gray-400 max-w-xl mx-auto">
-              Do URL ao relatório completo em menos de 30 segundos.
+              Em menos de 30 segundos, descubra se seu app está seguro ou pronto para ser explorado.
             </p>
           </div>
 
@@ -403,13 +399,10 @@ export default function LandingPage() {
               RESULTADOS EM TEMPO REAL
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              Veja exatamente o que seus usuários{' '}
-              <span className="text-red-400">não deveriam ver</span>
+              Veja o que hackers podem ver no seu app
             </h2>
             <p className="text-gray-400 mb-8 leading-relaxed">
-              Nosso scanner simula ataques reais e identifica brechas que podem expor dados dos seus
-              usuários. Cada vulnerabilidade vem com explicação em português e código de correção
-              gerado por IA.
+              Seu app pode expor dados, senhas e clientes sem você perceber. Cada falha encontrada vem com explicação simples e correção pronta para aplicar.
             </p>
             <ul className="space-y-4 mb-8">
               {[
@@ -425,7 +418,7 @@ export default function LandingPage() {
               ))}
             </ul>
             <button onClick={() => goToApp(true)} className="btn-primary inline-flex items-center gap-2">
-              Experimentar agora <ArrowRight className="w-4 h-4" />
+              Ver vulnerabilidades agora <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
@@ -531,13 +524,13 @@ export default function LandingPage() {
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 text-green-400 text-sm font-medium mb-4">
             <TrendingUp className="w-4 h-4" />
-            PREÇOS
+            QUANTO VALE SUA SEGURANÇA?
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
-            Simples e transparente
+            Preço menor que um prejuízo
           </h2>
           <p className="text-gray-400 max-w-xl mx-auto">
-            Comece grátis. Pague apenas quando quiser o relatório completo.
+            Teste grátis. Só pague se quiser ver todos os riscos e correções.
           </p>
         </div>
 
@@ -598,12 +591,11 @@ export default function LandingPage() {
             </span>
           </h2>
           <p className="text-gray-400 text-lg mb-10 max-w-2xl mx-auto">
-            Milhares de apps gerados por IA estão online com falhas graves de segurança.
-            Descubra se o seu é um deles — em 30 segundos.
+            Milhares de apps estão online com falhas graves. O seu pode ser o próximo alvo. Descubra em 30 segundos se você está seguro ou exposto.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button onClick={() => goToApp(true)} className="btn-primary text-lg px-10 py-4 shadow-xl shadow-blue-600/20 flex items-center gap-2">
-              Analisar meu app agora
+              Analisar agora
               <ArrowRight className="w-5 h-5" />
             </button>
             <p className="text-gray-500 text-sm flex items-center gap-1.5">
