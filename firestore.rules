@@ -28,5 +28,29 @@ service cloud.firestore {
       allow read: if request.auth != null && resource.data.userId == request.auth.uid;
       allow create, update, delete: if false;
     }
+
+    // Support chats - allow users to create/read their own messages and
+    // allow admins (custom claim `admin == true`) to read/write all chats.
+    match /support_chats/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || request.auth.token.admin == true);
+      allow create: if false;
+
+      // Subcollection `messages`
+      match /messages/{messageId} {
+        // The message creator can create messages under their own userId.
+        // Admins (server / support users) can also create replies if they have the `admin` claim.
+        allow create: if request.auth != null && (
+          request.auth.uid == userId || request.auth.token.admin == true
+        );
+
+        // Reading messages: owner or admin
+        allow read: if request.auth != null && (
+          request.auth.uid == userId || request.auth.token.admin == true
+        );
+
+        // No client-side updates/deletes allowed
+        allow update, delete: if false;
+      }
+    }
   }
 }
