@@ -8,23 +8,24 @@ if (typeof window !== 'undefined' && app) {
 }
 
 
-export function sendSupportMessage(userId: string, message: string) {
-  if (!db) throw new Error('Firestore não inicializado');
-  return addDoc(collection(db, 'support_chats', userId, 'messages'), {
-    message,
-    createdAt: serverTimestamp(),
-    from: 'user',
+export async function sendSupportMessage(userId: string, message: string) {
+  // Use the serverless endpoint (Vercel) which will moderate and write to Firestore
+  const resp = await fetch('/api/support/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, message, from: 'user' }),
   });
+  return resp.json();
 }
 
 
-export function sendSupportReply(userId: string, message: string) {
-  if (!db) throw new Error('Firestore não inicializado');
-  return addDoc(collection(db, 'support_chats', userId, 'messages'), {
-    message,
-    createdAt: serverTimestamp(),
-    from: 'support',
+export async function sendSupportReply(userId: string, message: string) {
+  const resp = await fetch('/api/support/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, message, from: 'support' }),
   });
+  return resp.json();
 }
 
 

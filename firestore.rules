@@ -38,10 +38,20 @@ service cloud.firestore {
       // Subcollection `messages`
       match /messages/{messageId} {
         // The message creator can create messages under their own userId.
-        // Admins (server / support users) can also create replies if they have the `admin` claim.
-        allow create: if request.auth != null && (
-          request.auth.uid == userId || request.auth.token.admin == true
-        );
+        // Admins (support staff) can also create replies if they have the `admin` claim.
+        // Additional protections:
+        // - user must be authenticated and email verified
+        // - message must include required fields and respect size limits
+        // - createdAt must be set server-side (equals request.time)
+        allow create: if request.auth != null
+          && (request.auth.uid == userId || request.auth.token.admin == true)
+          && request.auth.token.email_verified == true
+          && request.resource.data.keys().hasAll(['message', 'from', 'createdAt'])
+          && request.resource.data.message is string
+          && request.resource.data.message.size() > 0
+          && request.resource.data.message.size() <= 2000
+          && request.resource.data.from in ['user', 'support']
+          && request.resource.data.createdAt == request.time;
 
         // Reading messages: owner or admin
         allow read: if request.auth != null && (
