@@ -15,20 +15,48 @@ export default function AdminSupportTab() {
 
   useEffect(() => {
     if (!db) return;
-    // Listar todos os usuários que têm chats
-    const unsub = onSnapshot(collection(db, 'support_chats'), async (snapshot) => {
-      const users = snapshot.docs.map((doc) => doc.id);
-      const chatData = await Promise.all(users.map(async (userId) => {
-        const msgsQuery = query(collection(db, 'support_chats', userId, 'messages'), orderBy('createdAt', 'asc'));
-        const msgsSnap = await getDocs(msgsQuery);
-        return {
-          userId,
-          messages: msgsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Message)),
-        };
-      }));
-      setChats(chatData);
+
+    // Mantemos um mapa de unsubscribers para cada conversa (userId)
+    const unsubMap: Record<string, () => void> = {};
+
+    // Quando a lista de conversas muda, sincronizamos as inscrições por subcoleção
+    const mainUnsub = onSnapshot(collection(db, 'support_chats'), (snapshot) => {
+      const userIds = snapshot.docs.map((d) => d.id);
+
+      // Cancelar inscrições removidas
+      Object.keys(unsubMap).forEach((uid) => {
+        if (!userIds.includes(uid)) {
+          unsubMap[uid]();
+          delete unsubMap[uid];
+          setChats((prev) => prev.filter((c) => c.userId !== uid));
+        }
+      });
+
+      // Adicionar novas inscrições
+      userIds.forEach((userId) => {
+        if (unsubMap[userId]) return; // já inscrito
+
+        const msgsQ = query(collection(db, 'support_chats', userId, 'messages'), orderBy('createdAt', 'asc'));
+        const unsubMsgs = onSnapshot(msgsQ, (msgsSnap) => {
+          const messages = msgsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Message));
+          setChats((prev) => {
+            const others = prev.filter((c) => c.userId !== userId);
+            return [...others, { userId, messages }];
+          });
+        }, (err) => {
+          console.error('Erro ao escutar mensagens de', userId, err);
+        });
+
+        unsubMap[userId] = unsubMsgs;
+      });
+    }, (err) => {
+      console.error('Erro ao escutar support_chats', err);
     });
-    return () => unsub();
+
+    return () => {
+      mainUnsub();
+      Object.values(unsubMap).forEach((u) => u());
+    };
   }, [db]);
 
   return (
