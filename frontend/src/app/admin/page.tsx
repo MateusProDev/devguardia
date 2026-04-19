@@ -298,7 +298,6 @@ export default function AdminPage() {
               <Card icon={AlertTriangle} label="Vulnerabilidades" value={stats.vulnerabilities.total} sub="identificadas" color="yellow" />
               <Card icon={DollarSign} label="Receita Total" value={formatBRL(stats.revenue.totalCents)} sub={`${stats.revenue.totalPayments} pagamentos`} color="emerald" />
             </div>
-
             {/* Revenue details */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
@@ -321,7 +320,6 @@ export default function AdminPage() {
                 )}
               </div>
             </div>
-
             {/* Severity & Status */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
@@ -344,7 +342,6 @@ export default function AdminPage() {
                   })}
                 </div>
               </div>
-
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <Activity className="w-4 h-4 text-blue-400" /> Scans por Status
@@ -362,7 +359,6 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
-
             {/* Quick analytics */}
             {analytics && (
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
