@@ -315,7 +315,7 @@ export default function LandingPage() {
               {stats.users.count.toLocaleString('pt-BR')}+
             </div>
             <p className="text-gray-500 text-sm flex items-center justify-center gap-1.5">
-              <Users className="w-4 h-4" /> Desenvolvedores
+              <Users className="w-4 h-4" /> Usuários
             </p>
           </div>
         </div>
