@@ -247,7 +247,6 @@ export default function AdminPage() {
     { id: 'analytics' as const, label: 'Tráfego', icon: Eye },
     { id: 'support' as const, label: 'Suporte', icon: MessageCircle },
   ];
-
   return (
     <div className="min-h-screen bg-gray-950">
       {/* Header */}
