@@ -8,7 +8,7 @@ if (typeof window !== 'undefined' && app) {
 }
 
 
-export function sendSupportMessage(userId, message) {
+export function sendSupportMessage(userId: string, message: string) {
   if (!db) throw new Error('Firestore não inicializado');
   return addDoc(collection(db, 'support_chats', userId, 'messages'), {
     message,
@@ -18,7 +18,7 @@ export function sendSupportMessage(userId, message) {
 }
 
 
-export function sendSupportReply(userId, message) {
+export function sendSupportReply(userId: string, message: string) {
   if (!db) throw new Error('Firestore não inicializado');
   return addDoc(collection(db, 'support_chats', userId, 'messages'), {
     message,
@@ -28,7 +28,7 @@ export function sendSupportReply(userId, message) {
 }
 
 
-export function listenSupportMessages(userId, callback) {
+export function listenSupportMessages(userId: string, callback: (messages: any[]) => void) {
   if (!db) return () => {};
   const q = query(collection(db, 'support_chats', userId, 'messages'), orderBy('createdAt', 'asc'));
   return onSnapshot(q, (snapshot) => {
