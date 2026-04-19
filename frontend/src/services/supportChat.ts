@@ -1,9 +1,15 @@
-import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from 'firebase/firestore';
+
+import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, Firestore } from 'firebase/firestore';
 import app from '../lib/firebase';
 
-const db = getFirestore(app);
+let db: Firestore | undefined = undefined;
+if (typeof window !== 'undefined' && app) {
+  db = getFirestore(app);
+}
+
 
 export function sendSupportMessage(userId, message) {
+  if (!db) throw new Error('Firestore não inicializado');
   return addDoc(collection(db, 'support_chats', userId, 'messages'), {
     message,
     createdAt: serverTimestamp(),
@@ -11,7 +17,9 @@ export function sendSupportMessage(userId, message) {
   });
 }
 
+
 export function sendSupportReply(userId, message) {
+  if (!db) throw new Error('Firestore não inicializado');
   return addDoc(collection(db, 'support_chats', userId, 'messages'), {
     message,
     createdAt: serverTimestamp(),
@@ -19,7 +27,9 @@ export function sendSupportReply(userId, message) {
   });
 }
 
+
 export function listenSupportMessages(userId, callback) {
+  if (!db) return () => {};
   const q = query(collection(db, 'support_chats', userId, 'messages'), orderBy('createdAt', 'asc'));
   return onSnapshot(q, (snapshot) => {
     callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
