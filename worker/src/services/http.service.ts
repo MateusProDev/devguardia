@@ -69,13 +69,7 @@ export class HttpAnalyzerService {
           description: 'Sem CSP, o site é vulnerável a ataques XSS via scripts injetados.',
           solution: 'Configure uma política CSP adequada. Exemplo: Content-Security-Policy: default-src \'self\'',
         },
-        {
-          header: 'x-xss-protection',
-          title: 'X-XSS-Protection ausente',
-          severity: 'LOW' as const,
-          description: 'O header de proteção contra XSS não está configurado.',
-          solution: 'Adicione: X-XSS-Protection: 1; mode=block',
-        },
+        // X-XSS-Protection removido: header obsoleto
         {
           header: 'referrer-policy',
           title: 'Referrer-Policy ausente',
@@ -233,31 +227,67 @@ export class HttpAnalyzerService {
 
       // 10. Check for common misconfigurations via well-known paths
       const sensitiveEndpoints = [
-        { path: '/.env', title: 'Arquivo .env acessível publicamente', severity: 'CRITICAL' as const },
-        { path: '/.git/config', title: 'Repositório Git exposto', severity: 'CRITICAL' as const },
-        { path: '/wp-admin/', title: 'WordPress admin acessível', severity: 'MEDIUM' as const },
-        { path: '/phpinfo.php', title: 'phpinfo() acessível publicamente', severity: 'HIGH' as const },
+        {
+          path: '/.env',
+          title: 'Arquivo .env acessível publicamente',
+          severity: 'CRITICAL' as const,
+          validate: async (res: Response) => {
+            if (res.status !== 200) return false;
+            const text = await res.text();
+            return /DB_|DATABASE_|SECRET|TOKEN|PASSWORD|USER|HOST|PORT|=/.test(text);
+          },
+        },
+        {
+          path: '/.git/config',
+          title: 'Repositório Git exposto',
+          severity: 'CRITICAL' as const,
+          validate: async (res: Response) => {
+            if (res.status !== 200) return false;
+            const text = await res.text();
+            return text.includes('[core]') && text.includes('repositoryformatversion');
+          },
+        },
+        {
+          path: '/wp-admin/',
+          title: 'WordPress admin acessível',
+          severity: 'MEDIUM' as const,
+          validate: async (res: Response) => {
+            if (res.status !== 200) return false;
+            const text = await res.text();
+            return /wp-admin|WordPress|wp-login|user_login|Lost your password/i.test(text);
+          },
+        },
+        {
+          path: '/phpinfo.php',
+          title: 'phpinfo() acessível publicamente',
+          severity: 'HIGH' as const,
+          validate: async (res: Response) => {
+            if (res.status !== 200) return false;
+            const text = await res.text();
+            return /<title>phpinfo\(\)<\/title>|PHP Version|phpinfo\(/i.test(text);
+          },
+        },
       ];
 
       const baseUrl = new URL(url).origin;
       await Promise.all(
-        sensitiveEndpoints.map(async ({ path, title, severity }) => {
+        sensitiveEndpoints.map(async ({ path, title, severity, validate }) => {
           try {
             const ctrl = new AbortController();
             const t = setTimeout(() => ctrl.abort(), 5000);
             const r = await fetch(`${baseUrl}${path}`, {
-              method: 'HEAD',
+              method: 'GET',
               redirect: 'manual',
               signal: ctrl.signal,
               headers: { 'User-Agent': 'DevGuardBot/1.0' },
             });
             clearTimeout(t);
-            if (r.status === 200) {
+            if (await validate(r)) {
               console.log(`[HTTP] Sensitive path found: ${path} (${r.status})`);
               vulns.push({
                 title,
                 severity,
-                description: `O caminho ${path} está acessível publicamente, expondo informações sensíveis.`,
+                description: `O caminho ${path} está acessível publicamente, expondo informações sensíveis reais.`,
                 solution: `Bloqueie o acesso a ${path} no servidor web. Nunca exponha arquivos de configuração.`,
               });
             }
