@@ -635,8 +635,8 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-sm text-gray-300 mb-4">Legal</h4>
               <ul className="space-y-2.5">
-                <li><a href="#" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Termos de uso</a></li>
-                <li><a href="#" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Privacidade</a></li>
+                <li><a href="/terms" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Termos de uso</a></li>
+                <li><a href="/privacy" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Privacidade</a></li>
               </ul>
             </div>
           </div>
