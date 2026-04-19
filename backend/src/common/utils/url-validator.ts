@@ -1,6 +1,11 @@
 const ALLOWED_PROTOCOLS = ['http:', 'https:'];
 const BLOCKED_TLDS = ['.local', '.internal', '.corp', '.home', '.lan'];
 const BLOCKED_HOSTNAMES = ['metadata.google.internal', '169.254.169.254', 'metadata.internal'];
+const BLOCKED_DOMAINS = [
+  'devguardia.cloud',
+  'www.devguardia.cloud',
+  'app.devguardia.cloud',
+];
 
 export function isValidScanUrl(url: string): boolean {
   try {
@@ -22,6 +27,11 @@ export function isValidScanUrl(url: string): boolean {
     }
 
     if (BLOCKED_HOSTNAMES.includes(hostname)) {
+      return false;
+    }
+
+    // Bloquear domínios relacionados ao próprio SaaS
+    if (BLOCKED_DOMAINS.includes(hostname) || hostname.endsWith('.devguardia.cloud')) {
       return false;
     }
 
