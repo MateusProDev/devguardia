@@ -291,34 +291,325 @@ export default function AdminPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && (
-          // ...código da aba Visão Geral...
+          <div className="space-y-6">
+            {/* KPI Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card icon={Users} label="Usuários" value={stats.users.total} sub={`+${stats.users.today} hoje`} color="blue" />
+              <Card icon={Scan} label="Scans" value={stats.scans.total} sub={`+${stats.scans.today} hoje`} color="green" />
+              <Card icon={AlertTriangle} label="Vulnerabilidades" value={stats.vulnerabilities.total} sub="identificadas" color="yellow" />
+              <Card icon={DollarSign} label="Receita Total" value={formatBRL(stats.revenue.totalCents)} sub={`${stats.revenue.totalPayments} pagamentos`} color="emerald" />
+            </div>
+
+            {/* Revenue details */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                <p className="text-gray-500 text-sm mb-1">Scan Avulso</p>
+                <p className="text-xl font-bold text-white">{formatBRL(stats.revenue.singleScanCents)}</p>
+              </div>
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                <p className="text-gray-500 text-sm mb-1">Assinaturas</p>
+                <p className="text-xl font-bold text-white">{formatBRL(stats.revenue.subscriptionCents)}</p>
+                <p className="text-xs text-green-400 mt-1">{stats.revenue.activeSubscriptions} ativas</p>
+              </div>
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                <p className="text-gray-500 text-sm mb-1">Receita este mês</p>
+                <p className="text-xl font-bold text-white">{formatBRL(stats.revenue.thisMonthCents)}</p>
+                {stats.revenue.lastMonthCents > 0 && (
+                  <p className={`text-xs mt-1 ${stats.revenue.thisMonthCents >= stats.revenue.lastMonthCents ? 'text-green-400' : 'text-red-400'}`}>
+                    {stats.revenue.thisMonthCents >= stats.revenue.lastMonthCents ? '↑' : '↓'}{' '}
+                    vs {formatBRL(stats.revenue.lastMonthCents)} mês anterior
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Severity & Status */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-yellow-400" /> Vulnerabilidades por Severidade
+                </h3>
+                <div className="space-y-2">
+                  {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO'].map((sev) => {
+                    const count = stats.vulnerabilities.bySeverity[sev] || 0;
+                    const pct = stats.vulnerabilities.total > 0 ? (count / stats.vulnerabilities.total) * 100 : 0;
+                    return (
+                      <div key={sev} className="flex items-center gap-3">
+                        <span className={`text-xs font-bold w-16 ${SEVERITY_COLORS[sev]}`}>{sev}</span>
+                        <div className="flex-1 bg-gray-800 rounded-full h-2">
+                          <div className={`h-2 rounded-full ${sev === 'CRITICAL' ? 'bg-red-500' : sev === 'HIGH' ? 'bg-orange-500' : sev === 'MEDIUM' ? 'bg-yellow-500' : sev === 'LOW' ? 'bg-blue-500' : 'bg-gray-500'}`} style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className="text-sm text-gray-400 w-10 text-right">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-blue-400" /> Scans por Status
+                </h3>
+                <div className="space-y-2">
+                  {['COMPLETED', 'RUNNING', 'QUEUED', 'FAILED', 'PENDING'].map((status) => {
+                    const count = stats.scans.byStatus[status] || 0;
+                    return (
+                      <div key={status} className="flex items-center justify-between">
+                        <span className={`text-sm ${STATUS_COLORS[status]}`}>{status}</span>
+                        <span className="text-sm text-gray-400">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Quick analytics */}
+            {analytics && (
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-purple-400" /> Tráfego (últimos {analyticsDays} dias)
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-2xl font-bold">{analytics.totalViews}</p>
+                    <p className="text-gray-500 text-sm">Page views</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{analytics.uniqueSessions}</p>
+                    <p className="text-gray-500 text-sm">Sessões únicas</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{analytics.topPages.length}</p>
+                    <p className="text-gray-500 text-sm">Páginas visitadas</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* USERS TAB */}
         {activeTab === 'users' && (
-          // ...código da aba Usuários...
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <Users className="w-5 h-5 text-blue-400" />
+              Usuários Recentes ({stats.users.total} total)
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-gray-500 border-b border-gray-800">
+                    <th className="text-left py-3 px-3">Email</th>
+                    <th className="text-left py-3 px-3">Nome</th>
+                    <th className="text-center py-3 px-3">Scans</th>
+                    <th className="text-center py-3 px-3">Pagamentos</th>
+                    <th className="text-center py-3 px-3">Assinatura</th>
+                    <th className="text-right py-3 px-3">Criado em</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((u) => (
+                    <tr key={u.id} className="border-b border-gray-800/50 hover:bg-gray-900/50">
+                      <td className="py-3 px-3 text-white">{u.email}</td>
+                      <td className="py-3 px-3 text-gray-400">{u.displayName || '-'}</td>
+                      <td className="py-3 px-3 text-center">{u._count.scans}</td>
+                      <td className="py-3 px-3 text-center">{u._count.payments}</td>
+                      <td className="py-3 px-3 text-center">
+                        {u.subscription?.active ? (
+                          <span className="text-green-400 text-xs font-semibold">Ativa</span>
+                        ) : (
+                          <span className="text-gray-600 text-xs">-</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3 text-right text-gray-500">{formatDate(u.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
 
         {/* SCANS TAB */}
         {activeTab === 'scans' && (
-          // ...código da aba Scans...
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <Scan className="w-5 h-5 text-green-400" />
+              Scans Recentes ({stats.scans.total} total)
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-gray-500 border-b border-gray-800">
+                    <th className="text-left py-3 px-3">URL</th>
+                    <th className="text-left py-3 px-3">Usuário</th>
+                    <th className="text-center py-3 px-3">Status</th>
+                    <th className="text-center py-3 px-3">Score</th>
+                    <th className="text-center py-3 px-3">Vulns</th>
+                    <th className="text-right py-3 px-3">Data</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {scans.map((s) => (
+                    <tr key={s.id} className="border-b border-gray-800/50 hover:bg-gray-900/50">
+                      <td className="py-3 px-3 text-white max-w-xs truncate">{s.url}</td>
+                      <td className="py-3 px-3 text-gray-400 text-xs">{s.user.email}</td>
+                      <td className={`py-3 px-3 text-center text-xs font-semibold ${STATUS_COLORS[s.status] || ''}`}>
+                        {s.status}
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        {s.score !== null ? (
+                          <span className={s.score >= 80 ? 'text-green-400' : s.score >= 50 ? 'text-yellow-400' : 'text-red-400'}>
+                            {s.score}
+                          </span>
+                        ) : '-'}
+                      </td>
+                      <td className="py-3 px-3 text-center">{s._count.vulnerabilities}</td>
+                      <td className="py-3 px-3 text-right text-gray-500">{formatDate(s.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
 
         {/* PAYMENTS TAB */}
         {activeTab === 'payments' && (
-          // ...código da aba Pagamentos...
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-emerald-400" />
+              Pagamentos Recentes
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-gray-500 border-b border-gray-800">
+                    <th className="text-left py-3 px-3">Usuário</th>
+                    <th className="text-center py-3 px-3">Tipo</th>
+                    <th className="text-center py-3 px-3">Valor</th>
+                    <th className="text-center py-3 px-3">Status</th>
+                    <th className="text-right py-3 px-3">Data</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payments.map((p) => (
+                    <tr key={p.id} className="border-b border-gray-800/50 hover:bg-gray-900/50">
+                      <td className="py-3 px-3 text-white text-xs">{p.user.email}</td>
+                      <td className="py-3 px-3 text-center">
+                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                          p.type === 'SUBSCRIPTION' ? 'bg-purple-900 text-purple-300' : 'bg-blue-900 text-blue-300'
+                        }`}>
+                          {p.type === 'SUBSCRIPTION' ? 'Assinatura' : 'Avulso'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-center font-semibold text-white">{formatBRL(p.amount)}</td>
+                      <td className="py-3 px-3 text-center">
+                        <span className={`text-xs font-semibold ${
+                          p.status === 'APPROVED' ? 'text-green-400' : p.status === 'PENDING' ? 'text-yellow-400' : 'text-red-400'
+                        }`}>
+                          {p.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-right text-gray-500">{formatDate(p.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
 
         {/* ANALYTICS TAB */}
         {activeTab === 'analytics' && analytics && (
-          // ...código da aba Analytics...
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Eye className="w-5 h-5 text-purple-400" />
+                Tráfego do Site
+              </h2>
+              <div className="flex gap-2">
+                {[7, 14, 30].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setAnalyticsDays(d)}
+                    className={`px-3 py-1.5 text-xs rounded-lg ${
+                      analyticsDays === d ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    {d}d
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* KPIs */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                <Eye className="w-5 h-5 text-purple-400 mb-2" />
+                <p className="text-2xl font-bold">{analytics.totalViews}</p>
+                <p className="text-gray-500 text-sm">Page views</p>
+              </div>
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                <Users className="w-5 h-5 text-blue-400 mb-2" />
+                <p className="text-2xl font-bold">{analytics.uniqueSessions}</p>
+                <p className="text-gray-500 text-sm">Sessões únicas</p>
+              </div>
+            </div>
+
+            {/* Daily chart (simple bar) */}
+            {analytics.dailyViews.length > 0 && (
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-green-400" /> Views por Dia
+                </h3>
+                <div className="flex items-end gap-1 h-32">
+                  {analytics.dailyViews.map((d, i) => {
+                    const max = Math.max(...analytics.dailyViews.map((v) => v.views), 1);
+                    const height = (d.views / max) * 100;
+                    return (
+                      <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                        <span className="text-xs text-gray-500">{d.views}</span>
+                        <div
+                          className="w-full bg-blue-500 rounded-t min-h-[2px]"
+                          style={{ height: `${height}%` }}
+                        />
+                        <span className="text-[10px] text-gray-600">
+                          {new Date(d.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Top pages */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <Globe className="w-4 h-4 text-purple-400" /> Páginas Mais Visitadas
+              </h3>
+              <div className="space-y-2">
+                {analytics.topPages.map((p, i) => (
+                  <div key={i} className="flex items-center justify-between py-1.5">
+                    <span className="text-sm text-white">{p.path}</span>
+                    <span className="text-sm text-gray-400 font-semibold">{p.views}</span>
+                  </div>
+                ))}
+                {analytics.topPages.length === 0 && (
+                  <p className="text-gray-600 text-sm">Nenhum dado de tráfego ainda.</p>
+                )}
+              </div>
+            </div>
+          </div>
         )}
 
         {/* SUPPORT TAB */}
         {activeTab === 'support' && (
           <AdminSupportTab />
         )}
-
+      </div>
         {/* USERS TAB */}
         {activeTab === 'users' && (
           <div className="space-y-4">
