@@ -281,7 +281,7 @@ export default function LandingPage() {
               Confiado por devs e startups
             </p>
             <div className="flex flex-wrap items-center justify-center gap-8 opacity-40">
-              {['Next.js', 'Vercel', 'Railway', 'Supabase', 'Firebase', 'Cloudflare', 'Upstash', 'NMAP'].map((name) => (
+              {['Next.js', 'Vercel', 'Railway', 'Supabase', 'Firebase', 'Cloudflare', 'Upstash', 'Nmap'].map((name) => (
                 <span key={name} className="text-gray-400 font-semibold text-lg tracking-wide">
                   {name}
                 </span>
