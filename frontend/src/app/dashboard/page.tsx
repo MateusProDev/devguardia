@@ -1,6 +1,8 @@
 ﻿'use client';
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+const SupportChatButton = dynamic(() => import('../../components/SupportChatButton'), { ssr: false });
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
@@ -102,6 +104,8 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-950">
+      {/* Botão de suporte via chat */}
+      <SupportChatButton />
       {/* Navbar */}
       <nav className="border-b border-gray-800 px-4 sm:px-6 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
