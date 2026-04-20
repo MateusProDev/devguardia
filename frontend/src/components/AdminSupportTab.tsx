@@ -18,6 +18,8 @@ export default function AdminSupportTab() {
   const [authChecked, setAuthChecked] = useState(false);
   const db = typeof window !== 'undefined' && app ? getFirestore(app) : undefined;
 
+  console.log('AdminSupportTab mounted', { db, auth });
+
   useEffect(() => {
     if (!db) return;
 
@@ -30,6 +32,7 @@ export default function AdminSupportTab() {
     // Use the shared `auth` instance from `lib/firebase`
     const firebaseAuth = auth as any;
     const unsubAuth = onAuthStateChanged(firebaseAuth, async (user) => {
+      console.log('onAuthStateChanged callback, user:', user);
       if (!user) {
         setIsAdmin(false);
         setAuthChecked(true);
@@ -40,6 +43,7 @@ export default function AdminSupportTab() {
       try {
         // Force refresh the ID token to pick up recently-set custom claims
         const token = await user.getIdTokenResult(true);
+        console.log('token claims after refresh', token.claims);
         const adminClaim = (token.claims as any)?.admin === true;
         setIsAdmin(adminClaim);
         setAuthChecked(true);
