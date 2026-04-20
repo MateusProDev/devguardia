@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { getFirestore, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import app from '../lib/firebase';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../lib/firebase';
+import { listenSupportMessages } from '../services/supportChat';
 
 interface Message {
   id: string;
@@ -25,10 +27,9 @@ export default function AdminSupportTab() {
       setIsAdmin(false);
       return;
     }
-    // `db` is truthy only when running in the browser and `app` is initialized,
-    // so it's safe to call `getAuth(app)` here and satisfy the Auth type.
-    const firebaseAuth = getAuth(app as any);
-      const unsubAuth = onAuthStateChanged(firebaseAuth, async (user) => {
+    // Use the shared `auth` instance from `lib/firebase`
+    const firebaseAuth = auth as any;
+    const unsubAuth = onAuthStateChanged(firebaseAuth, async (user) => {
       if (!user) {
         setIsAdmin(false);
         setAuthChecked(true);
@@ -75,20 +76,23 @@ export default function AdminSupportTab() {
         userIds.forEach((userId) => {
           if (unsubMap[userId]) return; // já inscrito
 
-          const msgsQ = query(collection(db, 'support_chats', userId, 'messages'), orderBy('createdAt', 'asc'));
-          const unsubMsgs = onSnapshot(msgsQ, (msgsSnap) => {
-            const messages = msgsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Message));
-            // DEBUG: mostrar mensagens recebidas para esta conversa
+          // Reuse the dashboard listener helper for consistency
+          const unsubMsgs = listenSupportMessages(userId, (messages) => {
             console.log('messages for', userId, messages);
             setChats((prev) => {
               const others = prev.filter((c) => c.userId !== userId);
-              return [...others, { userId, messages }];
+              const newList = [...others, { userId, messages }];
+              // Ordena conversas pelo timestamp da última mensagem (desc)
+              newList.sort((a, b) => {
+                const ta = a.messages[a.messages.length - 1]?.createdAt?.seconds || 0;
+                const tb = b.messages[b.messages.length - 1]?.createdAt?.seconds || 0;
+                return tb - ta;
+              });
+              return newList;
             });
-          }, (err) => {
-            console.error('Erro ao escutar mensagens de', userId, err);
           });
 
-          unsubMap[userId] = unsubMsgs;
+          unsubMap[userId] = unsubMsgs as unknown as () => void;
         });
       }, (err) => {
         console.error('Erro ao escutar support_chats', err);
