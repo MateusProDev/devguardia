@@ -115,5 +115,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     flagged: false,
   });
 
+  // Ensure parent document exists so admins can list conversations
+  await db.collection('support_chats').doc(userId).set({ lastMessageAt: now }, { merge: true });
+
   return res.status(200).json({ ok: true, id: docRef.id, moderated: false });
 }
