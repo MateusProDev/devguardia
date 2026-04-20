@@ -28,7 +28,7 @@ export default function AdminSupportTab() {
     // `db` is truthy only when running in the browser and `app` is initialized,
     // so it's safe to call `getAuth(app)` here and satisfy the Auth type.
     const firebaseAuth = getAuth(app as any);
-    const unsubAuth = onAuthStateChanged(firebaseAuth, async (user) => {
+      const unsubAuth = onAuthStateChanged(firebaseAuth, async (user) => {
       if (!user) {
         setIsAdmin(false);
         setAuthChecked(true);
@@ -37,7 +37,8 @@ export default function AdminSupportTab() {
       }
 
       try {
-        const token = await user.getIdTokenResult();
+        // Force refresh the ID token to pick up recently-set custom claims
+        const token = await user.getIdTokenResult(true);
         const adminClaim = (token.claims as any)?.admin === true;
         setIsAdmin(adminClaim);
         setAuthChecked(true);
@@ -58,6 +59,8 @@ export default function AdminSupportTab() {
       if (mainUnsub) return;
       mainUnsub = onSnapshot(collection(db, 'support_chats'), (snapshot) => {
         const userIds = snapshot.docs.map((d) => d.id);
+        // DEBUG: listar ids de conversas encontradas
+        console.log('support_chats snapshot:', userIds);
 
         // Cancelar inscrições removidas
         Object.keys(unsubMap).forEach((uid) => {
@@ -75,6 +78,8 @@ export default function AdminSupportTab() {
           const msgsQ = query(collection(db, 'support_chats', userId, 'messages'), orderBy('createdAt', 'asc'));
           const unsubMsgs = onSnapshot(msgsQ, (msgsSnap) => {
             const messages = msgsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Message));
+            // DEBUG: mostrar mensagens recebidas para esta conversa
+            console.log('messages for', userId, messages);
             setChats((prev) => {
               const others = prev.filter((c) => c.userId !== userId);
               return [...others, { userId, messages }];
