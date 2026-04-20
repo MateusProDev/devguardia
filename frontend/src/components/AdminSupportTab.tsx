@@ -25,12 +25,9 @@ export default function AdminSupportTab() {
       setIsAdmin(false);
       return;
     }
-    const firebaseAuth = app ? getAuth(app) : null;
-    if (!firebaseAuth) {
-      setAuthChecked(true);
-      setIsAdmin(false);
-      return;
-    }
+    // `db` is truthy only when running in the browser and `app` is initialized,
+    // so it's safe to call `getAuth(app)` here and satisfy the Auth type.
+    const firebaseAuth = getAuth(app as any);
     const unsubAuth = onAuthStateChanged(firebaseAuth, async (user) => {
       if (!user) {
         setIsAdmin(false);
