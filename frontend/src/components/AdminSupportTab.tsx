@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDocs } from 'firebase/firestore';
-import app from '../lib/firebase';
+import { getFirestore, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import app, { auth } from '../lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 interface Message {
   id: string;
@@ -11,58 +12,103 @@ interface Message {
 
 export default function AdminSupportTab() {
   const [chats, setChats] = useState<{ userId: string; messages: Message[] }[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const db = typeof window !== 'undefined' && app ? getFirestore(app) : undefined;
 
   useEffect(() => {
     if (!db) return;
 
+    // Espera autenticação e verificação de claim admin antes de inscrever
+    const unsubAuth = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        setIsAdmin(false);
+        setAuthChecked(true);
+        setChats([]);
+        return;
+      }
+
+      try {
+        const token = await user.getIdTokenResult();
+        const adminClaim = (token.claims as any)?.admin === true;
+        setIsAdmin(adminClaim);
+        setAuthChecked(true);
+      } catch (e) {
+        console.error('Erro ao obter token do usuário', e);
+        setIsAdmin(false);
+        setAuthChecked(true);
+      }
+    });
+
     // Mantemos um mapa de unsubscribers para cada conversa (userId)
     const unsubMap: Record<string, () => void> = {};
 
-    // Quando a lista de conversas muda, sincronizamos as inscrições por subcoleção
-    const mainUnsub = onSnapshot(collection(db, 'support_chats'), (snapshot) => {
-      const userIds = snapshot.docs.map((d) => d.id);
+    let mainUnsub: (() => void) | null = null;
 
-      // Cancelar inscrições removidas
-      Object.keys(unsubMap).forEach((uid) => {
-        if (!userIds.includes(uid)) {
-          unsubMap[uid]();
-          delete unsubMap[uid];
-          setChats((prev) => prev.filter((c) => c.userId !== uid));
-        }
-      });
+    // Quando temos confirmação de admin, iniciamos o listener principal
+    const startMainListener = () => {
+      if (mainUnsub) return;
+      mainUnsub = onSnapshot(collection(db, 'support_chats'), (snapshot) => {
+        const userIds = snapshot.docs.map((d) => d.id);
 
-      // Adicionar novas inscrições
-      userIds.forEach((userId) => {
-        if (unsubMap[userId]) return; // já inscrito
-
-        const msgsQ = query(collection(db, 'support_chats', userId, 'messages'), orderBy('createdAt', 'asc'));
-        const unsubMsgs = onSnapshot(msgsQ, (msgsSnap) => {
-          const messages = msgsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Message));
-          setChats((prev) => {
-            const others = prev.filter((c) => c.userId !== userId);
-            return [...others, { userId, messages }];
-          });
-        }, (err) => {
-          console.error('Erro ao escutar mensagens de', userId, err);
+        // Cancelar inscrições removidas
+        Object.keys(unsubMap).forEach((uid) => {
+          if (!userIds.includes(uid)) {
+            unsubMap[uid]();
+            delete unsubMap[uid];
+            setChats((prev) => prev.filter((c) => c.userId !== uid));
+          }
         });
 
-        unsubMap[userId] = unsubMsgs;
+        // Adicionar novas inscrições
+        userIds.forEach((userId) => {
+          if (unsubMap[userId]) return; // já inscrito
+
+          const msgsQ = query(collection(db, 'support_chats', userId, 'messages'), orderBy('createdAt', 'asc'));
+          const unsubMsgs = onSnapshot(msgsQ, (msgsSnap) => {
+            const messages = msgsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Message));
+            setChats((prev) => {
+              const others = prev.filter((c) => c.userId !== userId);
+              return [...others, { userId, messages }];
+            });
+          }, (err) => {
+            console.error('Erro ao escutar mensagens de', userId, err);
+          });
+
+          unsubMap[userId] = unsubMsgs;
+        });
+      }, (err) => {
+        console.error('Erro ao escutar support_chats', err);
       });
-    }, (err) => {
-      console.error('Erro ao escutar support_chats', err);
-    });
+    };
+
+    // start listener only when authChecked and isAdmin
+    const checkInterval = setInterval(() => {
+      if (authChecked && isAdmin) {
+        startMainListener();
+        clearInterval(checkInterval);
+      }
+      if (authChecked && !isAdmin) {
+        // usuário não é admin — limpa tudo
+        setChats([]);
+        clearInterval(checkInterval);
+      }
+    }, 200);
 
     return () => {
-      mainUnsub();
+      unsubAuth();
+      if (mainUnsub) mainUnsub();
       Object.values(unsubMap).forEach((u) => u());
+      clearInterval(checkInterval);
     };
   }, [db]);
 
   return (
     <div className="p-6">
       <h2 className="text-xl font-bold mb-4">Suporte - Mensagens dos Usuários</h2>
-      {chats.length === 0 && <div className="text-gray-500">Nenhuma conversa encontrada.</div>}
+      {!authChecked && <div className="text-gray-400">Verificando autenticação...</div>}
+      {authChecked && !isAdmin && <div className="text-yellow-400">Acesso restrito: faça login como admin.</div>}
+      {authChecked && isAdmin && chats.length === 0 && <div className="text-gray-500">Nenhuma conversa encontrada.</div>}
       <div className="space-y-8">
         {chats.map((chat) => (
           <div key={chat.userId} className="border border-gray-800 rounded-lg p-4 bg-gray-900">
