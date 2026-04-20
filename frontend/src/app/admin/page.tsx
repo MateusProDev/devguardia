@@ -162,6 +162,8 @@ export default function AdminPage() {
       }
     } finally {
       setLoginLoading(false);
+      // Limpa a senha do estado imediatamente após tentativa de login
+      setPassword('');
     }
   }
 
