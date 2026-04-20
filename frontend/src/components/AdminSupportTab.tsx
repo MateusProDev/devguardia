@@ -42,15 +42,24 @@ export default function AdminSupportTab() {
 
       try {
         // Force refresh the ID token to pick up recently-set custom claims
+        await user.getIdToken(true);
         const token = await user.getIdTokenResult(true);
         console.log('token claims after refresh', token.claims);
         const adminClaim = (token.claims as any)?.admin === true;
         setIsAdmin(adminClaim);
         setAuthChecked(true);
+        if (adminClaim) {
+          // start listeners now that token is refreshed
+          startMainListener();
+        } else {
+          // not admin: clear any existing chats
+          setChats([]);
+        }
       } catch (e) {
         console.error('Erro ao obter token do usuário', e);
         setIsAdmin(false);
         setAuthChecked(true);
+        setChats([]);
       }
     });
 
@@ -103,24 +112,14 @@ export default function AdminSupportTab() {
       });
     };
 
-    // start listener only when authChecked and isAdmin
-    const checkInterval = setInterval(() => {
-      if (authChecked && isAdmin) {
-        startMainListener();
-        clearInterval(checkInterval);
-      }
-      if (authChecked && !isAdmin) {
-        // usuário não é admin — limpa tudo
-        setChats([]);
-        clearInterval(checkInterval);
-      }
-    }, 200);
+    // Start listener immediately when we detect admin in the auth callback.
+    // The auth callback will call `startMainListener` when adminClaim is true.
 
     return () => {
       unsubAuth();
       if (mainUnsub) mainUnsub();
       Object.values(unsubMap).forEach((u) => u());
-      clearInterval(checkInterval);
+      // nothing else to cleanup
     };
   }, [db]);
 
