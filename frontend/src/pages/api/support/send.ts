@@ -22,17 +22,53 @@ function initFirebase() {
 const RATE_LIMIT_WINDOW_SECONDS = 60;
 const RATE_LIMIT_MAX_MESSAGES = 5;
 
+const ALLOWED_ORIGINS = [
+  'https://app.devguardia.cloud',
+  'https://devguardia-git-main-mateus-ferreiras-projects.vercel.app',
+  'https://devguardia-fhlomykdv-mateus-ferreiras-projects.vercel.app',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+];
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end();
+
+  // CORS-ish origin check (best-effort)
+  const origin = req.headers.origin;
+  if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+    return res.status(403).json({ ok: false, error: 'origin_not_allowed' });
+  }
   try {
     initFirebase();
   } catch (err: any) {
     console.error('init firebase error', err.message || err);
     return res.status(500).json({ ok: false, error: 'server_init' });
   }
-
   const db = admin.firestore();
   const { userId, message, from } = req.body || {};
+  // Require Firebase ID token from client for authentication
+  const authHeader = req.headers.authorization || req.headers.Authorization;
+  if (!authHeader || typeof authHeader !== 'string' || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ ok: false, error: 'missing_auth' });
+  }
+  const idToken = authHeader.split(' ')[1];
+  let tokenClaims: admin.auth.DecodedIdToken;
+  try {
+    tokenClaims = await admin.auth().verifyIdToken(idToken);
+  } catch (e: any) {
+    console.error('verifyIdToken error', e && e.message);
+    return res.status(401).json({ ok: false, error: 'invalid_token' });
+  }
+
+  // Authorization rules:
+  // - if `from` is 'user', token uid must match userId
+  // - if `from` is 'support', token must have custom claim `admin: true`
+  if (from === 'user' && tokenClaims.uid !== userId) {
+    return res.status(403).json({ ok: false, error: 'forbidden_user_mismatch' });
+  }
+  if (from === 'support' && tokenClaims.admin !== true) {
+    return res.status(403).json({ ok: false, error: 'forbidden_not_admin' });
+  }
   if (!userId || !message || !from) return res.status(400).json({ ok: false, error: 'missing_fields' });
   if (typeof message !== 'string' || message.length === 0 || message.length > 2000) {
     return res.status(400).json({ ok: false, error: 'invalid_message' });
