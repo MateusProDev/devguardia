@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getFirestore, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import app, { auth } from '../lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import app from '../lib/firebase';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 interface Message {
   id: string;
@@ -20,7 +20,18 @@ export default function AdminSupportTab() {
     if (!db) return;
 
     // Espera autenticação e verificação de claim admin antes de inscrever
-    const unsubAuth = onAuthStateChanged(auth, async (user) => {
+    if (typeof window === 'undefined') {
+      setAuthChecked(true);
+      setIsAdmin(false);
+      return;
+    }
+    const firebaseAuth = app ? getAuth(app) : null;
+    if (!firebaseAuth) {
+      setAuthChecked(true);
+      setIsAdmin(false);
+      return;
+    }
+    const unsubAuth = onAuthStateChanged(firebaseAuth, async (user) => {
       if (!user) {
         setIsAdmin(false);
         setAuthChecked(true);
