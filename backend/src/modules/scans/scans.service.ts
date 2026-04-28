@@ -10,11 +10,12 @@ import { QueueService } from '../queue/queue.service';
 import { CreateScanDto } from './dto/create-scan.dto';
 import { isPrivateIP } from '../../common/utils/ip-validator';
 import { isValidScanUrl } from '../../common/utils/url-validator';
+import { LIMITS } from '../../common/config/limits.config';
 
 @Injectable()
 export class ScansService {
-  private readonly FREE_DAILY_LIMIT = 1;
-  private readonly FREE_VULN_LIMIT = 2;
+  private readonly FREE_DAILY_LIMIT = LIMITS.FREE_DAILY_SCAN_LIMIT;
+  private readonly FREE_VULN_LIMIT = LIMITS.FREE_VULNERABILITY_LIMIT;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -103,10 +104,10 @@ export class ScansService {
     if (!scan) throw new NotFoundException('Scan não encontrado.');
     if (scan.userId !== userId) throw new ForbiddenException('Acesso negado.');
 
-    // Auto-fail stuck scans (QUEUED/RUNNING for more than 2 minutes)
+    // Auto-fail stuck scans (QUEUED/RUNNING for more than configured minutes)
     if (
       (scan.status === 'QUEUED' || scan.status === 'RUNNING') &&
-      Date.now() - scan.createdAt.getTime() > 2 * 60 * 1000
+      Date.now() - scan.createdAt.getTime() > LIMITS.SCAN_EXPIRY_MINUTES * 60 * 1000
     ) {
       await this.prisma.scan.update({
         where: { id },

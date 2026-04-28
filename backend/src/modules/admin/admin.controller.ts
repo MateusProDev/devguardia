@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Query, UseGuards, Req } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { FirebaseAuthGuard } from '../../common/guards/firebase-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { AdminService } from './admin.service';
@@ -38,6 +39,7 @@ export class AdminController {
   }
 
   @Post('track')
+  @Throttle({ short: { ttl: 60000, limit: 60 } }) // 60 requests por minuto
   trackPageView(@Body() body: { path: string; sessionId: string; referrer?: string; userId?: string }, @Req() req: any) {
     const userAgent = req.headers['user-agent'] || '';
     return this.adminService.trackPageView({ ...body, userAgent });

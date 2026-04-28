@@ -3,15 +3,15 @@ import {
   BadRequestException,
   NotFoundException,
   ForbiddenException,
-  Logger,
 } from '@nestjs/common';
+import { Logger } from '../../common/utils/logger';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePaymentDto, PaymentType } from './dto/create-payment.dto';
 import { CreatePixPaymentDto } from './dto/create-pix-payment.dto';
 import * as crypto from 'crypto';
+import { PRICING, LIMITS } from '../../common/config/limits.config';
+import { isValidCPF } from '../../common/utils/cpf-validator';
 
-const SINGLE_SCAN_PRICE = parseInt(process.env.SINGLE_SCAN_PRICE || '990');
-const SUBSCRIPTION_PRICE = parseInt(process.env.SUBSCRIPTION_PRICE || '3990');
 const MERCADOPAGO_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
 const API_BASE = 'https://api.mercadopago.com';
 
@@ -29,7 +29,7 @@ export class PaymentsService {
 
   async processCardPayment(userId: string, dto: CreatePaymentDto) {
     const amount =
-      dto.type === PaymentType.SINGLE_SCAN ? SINGLE_SCAN_PRICE : SUBSCRIPTION_PRICE;
+      dto.type === PaymentType.SINGLE_SCAN ? PRICING.SINGLE_SCAN_PRICE : PRICING.SUBSCRIPTION_PRICE;
     const description =
       dto.type === PaymentType.SINGLE_SCAN
         ? 'DevGuard AI - Relatório Completo'
@@ -69,7 +69,7 @@ export class PaymentsService {
     };
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
+    const timeout = setTimeout(() => controller.abort(), LIMITS.MERCADOPAGO_TIMEOUT_MS);
 
     let response: Response;
     try {
@@ -123,8 +123,13 @@ export class PaymentsService {
   }
 
   async processPixPayment(userId: string, dto: CreatePixPaymentDto) {
+    // Validar CPF
+    if (!isValidCPF(dto.cpf)) {
+      throw new BadRequestException('CPF inválido');
+    }
+
     const amount =
-      dto.type === PaymentType.SINGLE_SCAN ? SINGLE_SCAN_PRICE : SUBSCRIPTION_PRICE;
+      dto.type === PaymentType.SINGLE_SCAN ? PRICING.SINGLE_SCAN_PRICE : PRICING.SUBSCRIPTION_PRICE;
     const description =
       dto.type === PaymentType.SINGLE_SCAN
         ? 'DevGuard AI - Relatório Completo'
@@ -166,7 +171,7 @@ export class PaymentsService {
     };
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
+    const timeout = setTimeout(() => controller.abort(), LIMITS.MERCADOPAGO_TIMEOUT_MS);
 
     let response: Response;
     try {
@@ -232,7 +237,7 @@ export class PaymentsService {
 
     if (payment.status === 'PENDING' && payment.mercadoPagoId) {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000);
+      const timeout = setTimeout(() => controller.abort(), LIMITS.MERCADOPAGO_STATUS_TIMEOUT_MS);
 
       try {
         const response = await fetch(`${API_BASE}/v1/payments/${payment.mercadoPagoId}`, {
@@ -428,14 +433,37 @@ export class PaymentsService {
         data: { isPremium: true },
       });
     } else if (payment.type === 'SUBSCRIPTION') {
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 30);
-
-      await this.prisma.subscription.upsert({
+      // Verificar se já existe assinatura para este usuário
+      const existingSubscription = await this.prisma.subscription.findUnique({
         where: { userId: payment.userId },
-        update: { active: true, expiresAt },
-        create: { userId: payment.userId, active: true, expiresAt },
       });
+
+      const now = new Date();
+      const newExpiresAt = new Date();
+      newExpiresAt.setDate(newExpiresAt.getDate() + PRICING.SUBSCRIPTION_DURATION_DAYS);
+
+      if (existingSubscription && existingSubscription.active) {
+        // Renovação automática: estender a partir da data atual de expiração
+        const currentExpiresAt = existingSubscription.expiresAt;
+        const extendedExpiresAt = new Date(currentExpiresAt);
+        extendedExpiresAt.setDate(extendedExpiresAt.getDate() + PRICING.SUBSCRIPTION_DURATION_DAYS);
+
+        await this.prisma.subscription.update({
+          where: { userId: payment.userId },
+          data: { expiresAt: extendedExpiresAt },
+        });
+
+        this.logger.log(`Subscription renewed for user ${payment.userId} until ${extendedExpiresAt.toISOString()}`);
+      } else {
+        // Nova assinatura ou reativação
+        await this.prisma.subscription.upsert({
+          where: { userId: payment.userId },
+          update: { active: true, expiresAt: newExpiresAt },
+          create: { userId: payment.userId, active: true, expiresAt: newExpiresAt },
+        });
+
+        this.logger.log(`Subscription activated for user ${payment.userId} until ${newExpiresAt.toISOString()}`);
+      }
     }
   }
 

@@ -44,6 +44,21 @@ const worker = new Worker(
     concurrency: 2,
     stalledInterval: 30000,
     lockDuration: 120000,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: {
+        type: 'exponential',
+        delay: 2000,
+      },
+      removeOnComplete: {
+        count: 1000,
+        age: 3600, // 1 hora
+      },
+      removeOnFail: {
+        count: 5000,
+        age: 86400, // 24 horas
+      },
+    },
   },
 );
 

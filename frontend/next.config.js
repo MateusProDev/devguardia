@@ -21,7 +21,7 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.firebaseapp.com https://*.googleapis.com https://sdk.mercadopago.com https://http2.mlstatic.com https://static.cloudflareinsights.com https://vercel.live",
+              "script-src 'self' 'unsafe-inline' https://apis.google.com https://*.firebaseapp.com https://*.googleapis.com https://sdk.mercadopago.com https://http2.mlstatic.com https://static.cloudflareinsights.com https://vercel.live",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: https: blob:",
@@ -30,6 +30,7 @@ const nextConfig = {
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",
+              "worker-src 'self' blob:",
             ].join('; '),
           },
         ],

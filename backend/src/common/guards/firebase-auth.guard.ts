@@ -7,29 +7,36 @@ import {
 } from '@nestjs/common';
 import { FirebaseAdminService } from '../../modules/auth/firebase-admin.service';
 import { UsersService } from '../../modules/users/users.service';
+import Redis from 'ioredis';
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
-  private userCache = new Map<string, { user: any; expiresAt: number }>();
-  private readonly CACHE_TTL = 60 * 1000;
-  private readonly MAX_CACHE_SIZE = 5000;
+  private readonly CACHE_TTL = 60; // segundos
+  private readonly redis: Redis;
 
   constructor(
     private readonly firebaseAdmin: FirebaseAdminService,
     private readonly usersService: UsersService,
-  ) {}
+  ) {
+    // Inicializar Redis connection
+    const redisUrl = process.env.REDIS_URL;
+    if (redisUrl) {
+      this.redis = new Redis(redisUrl, {
+        maxRetriesPerRequest: null,
+        enableReadyCheck: false,
+        ...(redisUrl.startsWith('rediss://') ? { tls: { rejectUnauthorized: true } } : {}),
+      });
+    } else {
+      this.redis = new Redis({
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+        maxRetriesPerRequest: null,
+      });
+    }
+  }
 
-  private cleanCache() {
-    const now = Date.now();
-    for (const [key, val] of this.userCache) {
-      if (val.expiresAt < now) this.userCache.delete(key);
-    }
-    if (this.userCache.size > this.MAX_CACHE_SIZE) {
-      const oldest = [...this.userCache.entries()]
-        .sort((a, b) => a[1].expiresAt - b[1].expiresAt)
-        .slice(0, 1000);
-      oldest.forEach(([k]) => this.userCache.delete(k));
-    }
+  private getCacheKey(uid: string): string {
+    return `auth:user:${uid}`;
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -45,10 +52,18 @@ export class FirebaseAuthGuard implements CanActivate {
     try {
       const decoded = await this.firebaseAdmin.verifyToken(token);
 
-      const cached = this.userCache.get(decoded.uid);
-      if (cached && cached.expiresAt > Date.now()) {
-        request.user = cached.user;
-        return true;
+      // Tentar buscar do cache Redis
+      const cacheKey = this.getCacheKey(decoded.uid);
+      const cached = await this.redis.get(cacheKey);
+      
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          request.user = parsed;
+          return true;
+        } catch {
+          // Cache corrompido, continuar com lookup normal
+        }
       }
 
       const user = await this.usersService.findOrCreate({
@@ -56,12 +71,18 @@ export class FirebaseAuthGuard implements CanActivate {
         email: decoded.email || '',
         displayName: decoded.name || null,
       });
-      this.userCache.set(decoded.uid, { user, expiresAt: Date.now() + this.CACHE_TTL });
-      if (Math.random() < 0.05) this.cleanCache();
+      
+      // Salvar no cache Redis
+      await this.redis.setex(cacheKey, this.CACHE_TTL, JSON.stringify(user));
+      
       request.user = user;
       return true;
     } catch {
       throw new UnauthorizedException('Invalid or expired token');
     }
+  }
+
+  async onModuleDestroy() {
+    await this.redis.quit();
   }
 }

@@ -24,7 +24,21 @@ export async function isPrivateIP(hostname: string): Promise<boolean> {
   }
 
   try {
-    const { address } = await dns.lookup(hostname);
+    // DNS lookup com timeout para prevenir ataques de slowloris
+    const { address } = await dns.lookup(hostname, { timeout: 5000 });
+    
+    // Proteção contra DNS rebinding: verificar se o hostname resolve para IP privado
+    if (isPrivateIPAddress(address)) {
+      return true;
+    }
+    
+    // Double-check lookup para prevenir DNS rebinding
+    const { address: secondLookup } = await dns.lookup(hostname, { timeout: 5000 });
+    if (address !== secondLookup) {
+      // DNS rebinding detectado - tratar como suspeito
+      return true;
+    }
+    
     return isPrivateIPAddress(address);
   } catch {
     return false;

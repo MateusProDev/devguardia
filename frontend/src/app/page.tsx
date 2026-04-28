@@ -87,7 +87,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white overflow-x-hidden">
+    <div className="min-h-screen bg-black text-gray-100 overflow-x-hidden font-mono">
       {/* JSON-LD Structured Data for SEO */}
       <script
         type="application/ld+json"
@@ -130,65 +130,70 @@ export default function LandingPage() {
 
       {/* ═══════ NAVBAR ═══════ */}
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b ${
           scrolled
-            ? 'bg-gray-950/80 backdrop-blur-xl border-b border-gray-800/50 shadow-2xl shadow-black/20'
-            : 'bg-transparent'
+            ? 'bg-black/90 backdrop-blur-md border-green-900/30'
+            : 'bg-black/50 border-green-900/20'
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <Image src="/favicon-96x96.png" alt="DevGuard IA" width={32} height={32} className="rounded-md" />
-            <span className="font-bold text-xl tracking-tight">
-              Dev<span className="text-blue-500">Guard</span> IA
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-green-500/20 border border-green-500/50 flex items-center justify-center">
+              <Terminal className="w-5 h-5 text-green-500" />
+            </div>
+            <span className="font-bold text-lg tracking-wider">
+              DEV<span className="text-green-500">GUARD</span>
             </span>
           </div>
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-gray-400 hover:text-white text-sm transition-colors">
-              Recursos
+            <a href="#features" className="text-gray-500 hover:text-green-400 text-sm transition-colors uppercase tracking-wider">
+              [RECURSOS]
             </a>
-            <a href="#how-it-works" className="text-gray-400 hover:text-white text-sm transition-colors">
-              Como funciona
+            <a href="#how-it-works" className="text-gray-500 hover:text-green-400 text-sm transition-colors uppercase tracking-wider">
+              [COMO FUNCIONA]
             </a>
-            <a href="#pricing" className="text-gray-400 hover:text-white text-sm transition-colors">
-              Preços
-            </a>
-            <a href="/pricing" className="text-gray-400 hover:text-white text-sm transition-colors">
-              Planos
+            <a href="#pricing" className="text-gray-500 hover:text-green-400 text-sm transition-colors uppercase tracking-wider">
+              [PREÇOS]
             </a>
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <button onClick={() => goToApp()} className="btn-outline text-sm py-2 px-4">
-              Login
+            <button onClick={() => goToApp()} className="text-gray-500 hover:text-green-400 text-sm py-2 px-4 border border-gray-800 hover:border-green-500/50 transition-all uppercase tracking-wider">
+              &lt;LOGIN/&gt;
             </button>
-            <button onClick={() => goToApp()} className="btn-primary text-sm py-2 px-5">
-              Começar grátis
+            <button onClick={() => goToApp()} className="bg-green-600/20 text-green-400 border border-green-500/50 hover:bg-green-600/30 text-sm py-2 px-5 transition-all uppercase tracking-wider">
+              &lt;INICIAR/&gt;
             </button>
           </div>
 
           {/* Mobile hamburger */}
-          <button className="md:hidden text-gray-400" onClick={() => setMobileMenu(!mobileMenu)}>
+          <button
+            className="md:hidden text-gray-500 hover:text-green-400"
+            onClick={() => setMobileMenu(!mobileMenu)}
+            aria-label={mobileMenu ? 'Fechar menu' : 'Abrir menu'}
+            aria-expanded={mobileMenu}
+            aria-controls="mobile-menu"
+          >
             {mobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
 
         {/* Mobile menu */}
         {mobileMenu && (
-          <div className="md:hidden bg-gray-950/95 backdrop-blur-xl border-t border-gray-800/50 px-6 py-6 space-y-4 animate-fade-in">
-            <a href="#features" className="block text-gray-300 hover:text-white transition-colors" onClick={() => setMobileMenu(false)}>
-              Recursos
+          <div id="mobile-menu" className="md:hidden bg-black/95 border-t border-green-900/30 px-6 py-6 space-y-4" role="menu">
+            <a href="#features" className="block text-gray-400 hover:text-green-400 transition-colors uppercase tracking-wider" onClick={() => setMobileMenu(false)}>
+              [RECURSOS]
             </a>
-            <a href="#how-it-works" className="block text-gray-300 hover:text-white transition-colors" onClick={() => setMobileMenu(false)}>
-              Como funciona
+            <a href="#how-it-works" className="block text-gray-400 hover:text-green-400 transition-colors uppercase tracking-wider" onClick={() => setMobileMenu(false)}>
+              [COMO FUNCIONA]
             </a>
-            <a href="#pricing" className="block text-gray-300 hover:text-white transition-colors" onClick={() => setMobileMenu(false)}>
-              Preços
+            <a href="#pricing" className="block text-gray-400 hover:text-green-400 transition-colors uppercase tracking-wider" onClick={() => setMobileMenu(false)}>
+              [PREÇOS]
             </a>
-            <button onClick={() => goToApp()} className="btn-primary w-full text-sm mt-2">
-              Começar grátis
+            <button onClick={() => goToApp()} className="w-full bg-green-600/20 text-green-400 border border-green-500/50 py-3 uppercase tracking-wider">
+              &lt;INICIAR/&gt;
             </button>
           </div>
         )}
@@ -198,91 +203,92 @@ export default function LandingPage() {
       <section className="relative pt-32 pb-24 md:pt-44 md:pb-32">
         {/* Background effects */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-blue-600/8 rounded-full blur-[120px]" />
-          <div className="absolute top-10 right-10 w-[300px] h-[300px] bg-purple-600/5 rounded-full blur-[100px]" />
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-700/50 to-transparent" />
-          {/* Grid pattern */}
+          {/* Matrix-like grid */}
           <div
-            className="absolute inset-0 opacity-[0.03]"
+            className="absolute inset-0 opacity-[0.05]"
             style={{
-              backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-              backgroundSize: '60px 60px',
+              backgroundImage: 'linear-gradient(0deg, transparent 24%, rgba(0, 255, 0, .1) 25%, rgba(0, 255, 0, .1) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, .1) 75%, rgba(0, 255, 0, .1) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(0, 255, 0, .1) 25%, rgba(0, 255, 0, .1) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, .1) 75%, rgba(0, 255, 0, .1) 76%, transparent 77%, transparent)',
+              backgroundSize: '50px 50px',
             }}
           />
+          {/* Scan line effect */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-green-500/30 to-transparent animate-pulse" />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-green-500/30 to-transparent animate-pulse" />
         </div>
 
         <div className="relative max-w-7xl mx-auto px-6 text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-blue-950/60 border border-blue-800/50 text-blue-300 text-sm px-5 py-2.5 rounded-full mb-8 animate-fade-in backdrop-blur-sm">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500" />
-            </span>
-            Seu app pode estar vulnerável agora. 
+          {/* Terminal-style badge */}
+          <div className="inline-flex items-center gap-2 bg-black border border-green-500/30 text-green-400 text-xs px-4 py-2 mb-8 font-mono">
+            <span className="w-2 h-2 bg-green-500 animate-pulse" />
+            <span className="opacity-70">root@devguard:~$</span>
+            <span className="opacity-50">scanning...</span>
           </div>
 
           {/* Main heading */}
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-[1.05] mb-8 animate-slide-up">
-            Hackers não avisam — 
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-8 tracking-tight">
+            <span className="text-gray-500">&lt;</span>
+            <span className="text-green-400">SYSTEM</span>
+            <span className="text-gray-500">&gt;</span>
             <br />
-            <span className="relative">
-              <span className="bg-gradient-to-r from-blue-400 via-blue-500 to-cyan-400 bg-clip-text text-transparent">
-               eles exploram.
-              </span>
-              <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none">
-                <path d="M2 10C50 4 100 2 150 6C200 10 250 4 298 8" stroke="url(#underline-gradient)" strokeWidth="3" strokeLinecap="round" />
-                <defs>
-                  <linearGradient id="underline-gradient" x1="0" y1="0" x2="300" y2="0">
-                    <stop stopColor="#60a5fa" />
-                    <stop offset="1" stopColor="#22d3ee" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </span>
+            <span className="text-white">SECURITY</span>
+            <span className="text-red-500 animate-pulse">_</span>
+            <br />
+            <span className="text-gray-500">&lt;/</span>
+            <span className="text-green-400">SYSTEM</span>
+            <span className="text-gray-500">&gt;</span>
           </h1>
 
-          <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-12 animate-slide-up animation-delay-100 leading-relaxed">
-            Quase todo app tem falhas críticas ocultas. Uma só pode causar prejuízo. Descubra antes dos hackers!
+          <p className="text-sm sm:text-base text-gray-500 max-w-2xl mx-auto mb-12 font-mono leading-relaxed">
+            <span className="text-green-500">$</span> detect_vulnerabilities --target=your_app --mode=aggressive
           </p>
 
-          {/* CTA Input */}
-          <div className="max-w-2xl mx-auto animate-slide-up animation-delay-200">
-            <div className="relative flex flex-col sm:flex-row gap-3 p-2 bg-gray-900/80 border border-gray-800/80 rounded-2xl backdrop-blur-sm">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input
-                  type="text"
-                  value={demoUrl}
-                  onChange={(e) => setDemoUrl(e.target.value)}
-                  placeholder="seudominio.com.br"
-                  className="w-full bg-transparent text-white placeholder-gray-500 pl-12 pr-4 py-4 outline-none text-lg"
-                  autoCorrect="off"
-                  autoCapitalize="none"
-                  spellCheck={false}
-                />
+          {/* CTA Input - Terminal style */}
+          <div className="max-w-2xl mx-auto">
+            <div className="relative bg-black border border-green-500/30 p-1">
+              <div className="flex items-center gap-2 px-3 py-2 border-b border-green-500/20">
+                <div className="w-3 h-3 rounded-full bg-red-500/50" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+                <div className="w-3 h-3 rounded-full bg-green-500/50" />
+                <span className="text-gray-600 text-xs ml-2">devguard_terminal</span>
               </div>
-              <button
-                onClick={() => goToApp(true)}
-                className="btn-primary flex items-center justify-center gap-2 whitespace-nowrap text-base px-8 py-4 shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 transition-all"
-              >
-                Checar meu app agora
-                <ArrowRight className="w-5 h-5" />
-              </button>
+              <div className="p-4">
+                <div className="flex items-center gap-2 text-green-500 text-sm mb-3">
+                  <span>$</span>
+                  <span className="opacity-70">scan --url</span>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    value={demoUrl}
+                    onChange={(e) => setDemoUrl(e.target.value)}
+                    placeholder="https://target-domain.com"
+                    className="flex-1 bg-black/50 border border-green-500/20 text-green-400 placeholder-gray-700 px-4 py-3 outline-none text-sm font-mono focus:border-green-500/50 transition-colors"
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                  />
+                  <button
+                    onClick={() => goToApp(true)}
+                    className="bg-green-600/20 text-green-400 border border-green-500/50 hover:bg-green-600/30 px-6 py-3 text-sm font-mono uppercase tracking-wider transition-all"
+                  >
+                    &lt;EXECUTE/&gt;
+                  </button>
+                </div>
+              </div>
             </div>
-            <p className="text-gray-500 text-sm mt-4 flex items-center justify-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-green-500/70" />
-              1 scan gratuito por dia — sem cartão, sem risco
+            <p className="text-gray-600 text-xs mt-4 font-mono">
+              [INFO] 1 free scan/day | no credit card required
             </p>
           </div>
 
-          {/* Trusted by / Social proof */}
-          <div className="mt-20 animate-fade-in animation-delay-400">
-            <p className="text-gray-600 text-xs uppercase tracking-widest mb-6">
-              Confiado por devs e startups
+          {/* Tech stack */}
+          <div className="mt-16">
+            <p className="text-gray-700 text-xs uppercase tracking-widest mb-4 font-mono">
+              // POWERED_BY
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-8 opacity-40">
-              {['Next.js', 'Vercel', 'Railway', 'Supabase', 'Firebase', 'Cloudflare', 'Upstash', 'Nmap'].map((name) => (
-                <span key={name} className="text-gray-400 font-semibold text-lg tracking-wide">
+            <div className="flex flex-wrap items-center justify-center gap-6">
+              {['NMAP', 'OWASP', 'BULLMQ', 'REDIS', 'PRISMA', 'NESTJS', 'NEXTJS', 'CLOUDFLARE'].map((name) => (
+                <span key={name} className="text-gray-600 text-xs font-mono border border-gray-800 px-2 py-1">
                   {name}
                 </span>
               ))}
@@ -292,30 +298,30 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════ STATS BAR ═══════ */}
-      <section className="border-y border-gray-800/50 bg-gray-900/30 backdrop-blur-sm">
+      <section className="border-y border-green-900/20 bg-black/50">
         <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
-          <div ref={stats.scans.ref}>
-            <div className="text-4xl md:text-5xl font-bold text-white mb-1">
-              {stats.scans.count.toLocaleString('pt-BR')}+
+          <div ref={stats.scans.ref} className="border border-green-500/10 p-6">
+            <div className="text-3xl md:text-4xl font-bold text-green-400 mb-2 font-mono">
+              {stats.scans.count.toLocaleString('pt-BR')}
             </div>
-            <p className="text-gray-500 text-sm flex items-center justify-center gap-1.5">
-              <Search className="w-4 h-4" /> Scans realizados
+            <p className="text-gray-600 text-xs font-mono uppercase tracking-wider">
+              // SCANS_EXECUTED
             </p>
           </div>
-          <div ref={stats.vulns.ref}>
-            <div className="text-4xl md:text-5xl font-bold text-white mb-1">
-              {stats.vulns.count.toLocaleString('pt-BR')}+
+          <div ref={stats.vulns.ref} className="border border-red-500/10 p-6">
+            <div className="text-3xl md:text-4xl font-bold text-red-400 mb-2 font-mono">
+              {stats.vulns.count.toLocaleString('pt-BR')}
             </div>
-            <p className="text-gray-500 text-sm flex items-center justify-center gap-1.5">
-              <ShieldAlert className="w-4 h-4" /> Vulnerabilidades encontradas
+            <p className="text-gray-600 text-xs font-mono uppercase tracking-wider">
+              // VULNERABILITIES_FOUND
             </p>
           </div>
-          <div ref={stats.users.ref}>
-            <div className="text-4xl md:text-5xl font-bold text-white mb-1">
-              {stats.users.count.toLocaleString('pt-BR')}+
+          <div ref={stats.users.ref} className="border border-green-500/10 p-6">
+            <div className="text-3xl md:text-4xl font-bold text-green-400 mb-2 font-mono">
+              {stats.users.count.toLocaleString('pt-BR')}
             </div>
-            <p className="text-gray-500 text-sm flex items-center justify-center gap-1.5">
-              <Users className="w-4 h-4" /> Usuários
+            <p className="text-gray-600 text-xs font-mono uppercase tracking-wider">
+              // ACTIVE_USERS
             </p>
           </div>
         </div>
@@ -324,31 +330,34 @@ export default function LandingPage() {
       {/* ═══════ FEATURES ═══════ */}
       <section id="features" className="relative max-w-7xl mx-auto px-6 py-28">
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 text-blue-400 text-sm font-medium mb-4">
-            <Eye className="w-4 h-4" />
-            RISCO ESCONDIDO
+          <div className="inline-flex items-center gap-2 text-green-400 text-xs font-mono mb-4 border border-green-500/30 px-3 py-1">
+            <span className="w-1.5 h-1.5 bg-green-500 animate-pulse" />
+            <span>DETECTION_MODULES</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
-            O que pode estar vulnerável no seu app?
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 font-mono tracking-tight">
+            &lt;SCAN_VECTORS/&gt;
           </h2>
-          <p className="text-gray-400 max-w-xl mx-auto">
-            Falhas que hackers exploram passam despercebidas por quem não é especialista. Não teste no escuro.
+          <p className="text-gray-600 max-w-xl mx-auto text-sm font-mono">
+            // Automated vulnerability detection across multiple attack vectors
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {features.map((f, i) => (
             <div
               key={f.title}
-              className="group relative bg-gray-900/50 border border-gray-800/50 rounded-2xl p-7 hover:border-gray-700/80 transition-all duration-300 hover:-translate-y-1"
+              className="group relative bg-black border border-green-500/20 p-5 hover:border-green-500/40 transition-all duration-300"
             >
-              <div className="absolute inset-0 bg-gradient-to-b from-blue-600/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute top-0 left-0 w-1 h-full bg-green-500/0 group-hover:bg-green-500/50 transition-all" />
               <div className="relative">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 ${featureColors[i % featureColors.length]}`}>
-                  {f.icon}
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-green-500 text-xs font-mono">0{i + 1}</span>
+                  <div className={`w-8 h-8 flex items-center justify-center ${featureColors[i % featureColors.length]}`}>
+                    {f.icon}
+                  </div>
                 </div>
-                <h3 className="font-semibold text-lg mb-2 text-white">{f.title}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">{f.description}</p>
+                <h3 className="font-mono text-sm font-semibold mb-2 text-green-400">{f.title}</h3>
+                <p className="text-gray-600 text-xs leading-relaxed font-mono">{f.description}</p>
               </div>
             </div>
           ))}
@@ -356,36 +365,36 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════ HOW IT WORKS ═══════ */}
-      <section id="how-it-works" className="relative bg-gray-900/20 border-y border-gray-800/30">
+      <section id="how-it-works" className="relative border-y border-green-900/20 bg-black/30">
         <div className="max-w-7xl mx-auto px-6 py-28">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 text-cyan-400 text-sm font-medium mb-4">
-              <Terminal className="w-4 h-4" />
-              COMO EVITAR UM DESASTRE
+            <div className="inline-flex items-center gap-2 text-green-400 text-xs font-mono mb-4 border border-green-500/30 px-3 py-1">
+              <Terminal className="w-3 h-3" />
+              <span>EXECUTION_FLOW</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
-              3 passos para não ser pego de surpresa
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 font-mono tracking-tight">
+              &lt;SCAN_PROCESS/&gt;
             </h2>
-            <p className="text-gray-400 max-w-xl mx-auto">
-              Em menos de 30 segundos, descubra se seu app está seguro ou pronto para ser explorado.
+            <p className="text-gray-600 max-w-xl mx-auto text-sm font-mono">
+              // Automated security assessment pipeline
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {steps.map((s, i) => (
-              <div key={s.title} className="relative text-center">
+              <div key={s.title} className="relative">
                 {/* Connector line */}
                 {i < 2 && (
-                  <div className="hidden md:block absolute top-10 left-[60%] w-[80%] h-px bg-gradient-to-r from-gray-700 to-transparent" />
+                  <div className="hidden md:block absolute top-4 left-[70%] w-[30%] h-px bg-green-500/20" />
                 )}
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gray-800/80 border border-gray-700/50 mb-6 relative">
-                  <span className="text-blue-400">{s.icon}</span>
-                  <span className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">
+                <div className="bg-black border border-green-500/20 p-6 relative">
+                  <div className="absolute -top-2 -left-2 w-6 h-6 bg-green-500 text-black text-xs font-bold flex items-center justify-center font-mono">
                     {i + 1}
-                  </span>
+                  </div>
+                  <div className="text-green-500 mb-4">{s.icon}</div>
+                  <h3 className="font-mono text-sm font-semibold mb-2 text-green-400">{s.title}</h3>
+                  <p className="text-gray-600 text-xs font-mono">{s.description}</p>
                 </div>
-                <h3 className="font-semibold text-lg mb-2">{s.title}</h3>
-                <p className="text-gray-400 text-sm max-w-xs mx-auto">{s.description}</p>
               </div>
             ))}
           </div>
@@ -396,88 +405,91 @@ export default function LandingPage() {
       <section className="max-w-7xl mx-auto px-6 py-28">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div>
-            <div className="inline-flex items-center gap-2 text-orange-400 text-sm font-medium mb-4">
-              <BarChart3 className="w-4 h-4" />
-              RESULTADOS EM TEMPO REAL
+            <div className="inline-flex items-center gap-2 text-red-400 text-xs font-mono mb-4 border border-red-500/30 px-3 py-1">
+              <BarChart3 className="w-3 h-3" />
+              <span>SCAN_OUTPUT</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              Veja o que hackers podem ver no seu app
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 font-mono tracking-tight">
+              &lt;VULNERABILITY_REPORT/&gt;
             </h2>
-            <p className="text-gray-400 mb-8 leading-relaxed">
-              Seu app pode expor dados, senhas e clientes sem você perceber. Cada falha encontrada vem com explicação simples e correção pronta para aplicar.
+            <p className="text-gray-600 mb-8 leading-relaxed text-sm font-mono">
+              // Real-time vulnerability detection with AI-powered remediation
             </p>
-            <ul className="space-y-4 mb-8">
+            <ul className="space-y-3 mb-8">
               {[
-                'Relatório detalhado com score de 0-100',
-                'Vulnerabilidades categorizadas por severidade',
-                'Correções prontas para copiar e colar',
-                'Explicações simples, sem jargão técnico',
+                'Security score: 0-100 rating',
+                'Severity-based categorization',
+                'Copy-paste ready fixes',
+                'Plain language explanations',
               ].map((item) => (
                 <li key={item} className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-gray-300 text-sm">{item}</span>
+                  <span className="text-green-500 font-mono text-xs">[+]</span>
+                  <span className="text-gray-400 text-xs font-mono">{item}</span>
                 </li>
               ))}
             </ul>
-            <button onClick={() => goToApp(true)} className="btn-primary inline-flex items-center gap-2">
-              Ver vulnerabilidades agora <ArrowRight className="w-4 h-4" />
+            <button onClick={() => goToApp(true)} className="bg-green-600/20 text-green-400 border border-green-500/50 hover:bg-green-600/30 px-6 py-3 text-sm font-mono uppercase tracking-wider transition-all">
+              &lt;INITIATE_SCAN/&gt;
             </button>
           </div>
 
-          {/* Scan result card */}
+          {/* Scan result card - Terminal style */}
           <div className="relative">
-            <div className="absolute -inset-4 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-cyan-600/10 rounded-3xl blur-2xl" />
-            <div className="relative bg-gray-900 border border-gray-800/80 rounded-2xl p-6 shadow-2xl">
-              {/* Header */}
-              <div className="flex items-start justify-between mb-6">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
+            <div className="bg-black border border-green-500/30 rounded-lg overflow-hidden">
+              {/* Terminal header */}
+              <div className="flex items-center gap-2 px-4 py-2 border-b border-green-500/20 bg-black/50">
+                <div className="w-3 h-3 rounded-full bg-red-500/50" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+                <div className="w-3 h-3 rounded-full bg-green-500/50" />
+                <span className="text-gray-600 text-xs ml-2 font-mono">scan_results.log</span>
+              </div>
+              {/* Terminal content */}
+              <div className="p-4 font-mono text-xs">
+                <div className="text-gray-600 mb-2">
+                  <span className="text-green-500">$</span> nmap -sV --script vuln target.com
+                </div>
+                <div className="text-gray-500 mb-4">
+                  Starting Nmap 7.94 ( https://nmap.org )
+                </div>
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-2">
                     <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                    <p className="text-gray-400 text-sm">exemplo-startup.vercel.app</p>
+                    <span className="text-gray-400">example-startup.vercel.app</span>
                   </div>
-                  <h3 className="text-xl font-bold">Resultado do Scan</h3>
+                  <div className="text-red-400 text-2xl font-bold mb-1">SCORE: 42/100</div>
+                  <div className="text-red-400/70 text-xs">CRITICAL_VULNERABILITIES_DETECTED</div>
                 </div>
-                <div className="text-center bg-red-950/50 border border-red-800/50 rounded-xl px-5 py-3">
-                  <div className="text-4xl font-bold text-red-400">42</div>
-                  <div className="text-red-400/70 text-xs font-medium">CRÍTICO</div>
+                {/* Progress bar */}
+                <div className="w-full h-1 bg-gray-800 rounded mb-4">
+                  <div className="h-full w-[42%] bg-red-500 rounded" />
                 </div>
-              </div>
-
-              {/* Progress bar */}
-              <div className="w-full h-2 bg-gray-800 rounded-full mb-6 overflow-hidden">
-                <div className="h-full w-[42%] bg-gradient-to-r from-red-500 to-red-400 rounded-full" />
-              </div>
-
-              {/* Vulnerabilities */}
-              <div className="space-y-2.5">
-                {exampleVulns.map((v) => (
-                  <div
-                    key={v.title}
-                    className={`flex items-center gap-3 p-3.5 rounded-xl border ${severityStyle[v.severity]} transition-all hover:scale-[1.01]`}
-                  >
-                    <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{v.title}</p>
-                      <p className="text-xs opacity-60 mt-0.5">{v.severity}</p>
-                    </div>
-                    {v.locked && (
-                      <div className="flex items-center gap-1 text-xs text-gray-500 bg-gray-800/50 px-2 py-1 rounded-md">
-                        <Lock className="w-3 h-3" />
-                        PRO
+                {/* Vulnerabilities */}
+                <div className="space-y-2">
+                  {exampleVulns.map((v) => (
+                    <div
+                      key={v.title}
+                      className={`flex items-center gap-2 p-2 border ${severityStyle[v.severity]}`}
+                    >
+                      <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs truncate">{v.title}</p>
+                        <p className="text-[10px] opacity-60">{v.severity}</p>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Upsell */}
-              <div className="mt-4 p-4 bg-gradient-to-r from-blue-950/60 to-purple-950/40 border border-blue-800/40 rounded-xl text-center">
-                <p className="text-blue-300 text-sm mb-3">
-                  +3 vulnerabilidades ocultas — desbloqueie o relatório completo
-                </p>
-                <button onClick={() => goToApp()} className="btn-primary text-sm py-2.5 px-6">
-                  Ver relatório completo
-                </button>
+                      {v.locked && (
+                        <span className="text-[10px] text-gray-600 border border-gray-800 px-1">[LOCKED]</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {/* Upsell */}
+                <div className="mt-4 p-3 border border-green-500/20 text-center">
+                  <p className="text-green-400/70 text-xs mb-2">
+                    +3 hidden vulnerabilities detected
+                  </p>
+                  <button onClick={() => goToApp()} className="text-green-400 text-xs font-mono hover:underline">
+                    [UNLOCK_FULL_REPORT]
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -485,34 +497,34 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════ TESTIMONIALS ═══════ */}
-      <section className="bg-gray-900/20 border-y border-gray-800/30">
+      <section className="border-y border-green-900/20 bg-black/30">
         <div className="max-w-7xl mx-auto px-6 py-28">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 text-yellow-400 text-sm font-medium mb-4">
-              <Star className="w-4 h-4" />
-              DEPOIMENTOS
+            <div className="inline-flex items-center gap-2 text-green-400 text-xs font-mono mb-4 border border-green-500/30 px-3 py-1">
+              <Star className="w-3 h-3" />
+              <span>USER_FEEDBACK</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold">
-              O que devs estão dizendo
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold font-mono tracking-tight">
+              &lt;OPERATOR_LOGS/&gt;
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {testimonials.map((t) => (
-              <div key={t.name} className="bg-gray-900/60 border border-gray-800/50 rounded-2xl p-6 hover:border-gray-700/60 transition-colors">
-                <div className="flex gap-1 mb-4">
+              <div key={t.name} className="bg-black border border-green-500/20 p-5 hover:border-green-500/40 transition-colors">
+                <div className="flex gap-1 mb-3">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                    <Star key={i} className="w-3 h-3 text-green-500 fill-green-500" />
                   ))}
                 </div>
-                <p className="text-gray-300 text-sm leading-relaxed mb-6">&ldquo;{t.quote}&rdquo;</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-sm">
+                <p className="text-gray-500 text-xs leading-relaxed mb-4 font-mono">&ldquo;{t.quote}&rdquo;</p>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-green-500/20 border border-green-500/50 flex items-center justify-center text-green-400 font-bold text-xs font-mono">
                     {t.name[0]}
                   </div>
                   <div>
-                    <p className="font-medium text-sm">{t.name}</p>
-                    <p className="text-gray-500 text-xs">{t.role}</p>
+                    <p className="font-mono text-xs text-green-400">{t.name}</p>
+                    <p className="text-gray-600 text-[10px] font-mono">{t.role}</p>
                   </div>
                 </div>
               </div>
@@ -524,52 +536,52 @@ export default function LandingPage() {
       {/* ═══════ PRICING ═══════ */}
       <section id="pricing" className="max-w-7xl mx-auto px-6 py-28">
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 text-green-400 text-sm font-medium mb-4">
-            <TrendingUp className="w-4 h-4" />
-            QUANTO VALE SUA SEGURANÇA?
+          <div className="inline-flex items-center gap-2 text-green-400 text-xs font-mono mb-4 border border-green-500/30 px-3 py-1">
+            <TrendingUp className="w-3 h-3" />
+            <span>ACCESS_LEVELS</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
-            Preço menor que um prejuízo
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 font-mono tracking-tight">
+            &lt;SUBSCRIPTION_TIERS/&gt;
           </h2>
-          <p className="text-gray-400 max-w-xl mx-auto">
-            Teste grátis. Só pague se quiser ver todos os riscos e correções.
+          <p className="text-gray-600 max-w-xl mx-auto text-sm font-mono">
+            // Choose your security clearance level
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto">
           {plans.map((p) => (
             <div
               key={p.name}
-              className={`relative bg-gray-900/50 border rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1 ${
+              className={`relative bg-black border p-6 transition-all duration-300 ${
                 p.highlight
-                  ? 'border-blue-500/50 ring-1 ring-blue-500/20 shadow-xl shadow-blue-600/5'
-                  : 'border-gray-800/50 hover:border-gray-700/80'
+                  ? 'border-green-500/50 ring-1 ring-green-500/20'
+                  : 'border-green-500/20 hover:border-green-500/40'
               }`}
             >
               {p.highlight && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-xs font-bold px-4 py-1.5 rounded-full">
-                  MAIS POPULAR
+                <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-green-500 text-black text-[10px] font-bold px-3 py-1 font-mono uppercase tracking-wider">
+                  [RECOMMENDED]
                 </div>
               )}
-              <h3 className="font-bold text-xl mb-2">{p.name}</h3>
-              <div className="mb-6">
-                <span className="text-4xl font-bold">{p.price}</span>
-                <span className="text-gray-500 text-base font-normal">{p.period}</span>
+              <h3 className="font-mono text-sm font-bold mb-2 text-green-400">{p.name}</h3>
+              <div className="mb-4">
+                <span className="text-2xl font-bold text-white">{p.price}</span>
+                <span className="text-gray-600 text-sm font-normal">{p.period}</span>
               </div>
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-2 mb-6">
                 {p.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2.5 text-sm text-gray-300">
-                    <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <li key={f} className="flex items-center gap-2 text-xs text-gray-400 font-mono">
+                    <span className="text-green-500">[+]</span>
                     {f}
                   </li>
                 ))}
               </ul>
               <button
                 onClick={() => goToApp()}
-                className={`w-full text-sm py-3 rounded-xl font-semibold transition-all ${
+                className={`w-full text-xs py-2 font-mono uppercase tracking-wider transition-all ${
                   p.highlight
-                    ? 'btn-primary shadow-lg shadow-blue-600/20'
-                    : 'btn-outline'
+                    ? 'bg-green-600/20 text-green-400 border border-green-500/50 hover:bg-green-600/30'
+                    : 'text-gray-500 border border-gray-800 hover:border-green-500/30 hover:text-green-400'
                 }`}
               >
                 {p.cta}
@@ -580,70 +592,73 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════ FINAL CTA ═══════ */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-950 via-blue-950/20 to-gray-950" />
+      <section className="relative overflow-hidden border-t border-green-900/20">
+        <div className="absolute inset-0 bg-black" />
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-blue-600/10 rounded-full blur-[120px]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-green-500/5 rounded-full blur-[120px]" />
         </div>
         <div className="relative max-w-4xl mx-auto px-6 py-28 text-center">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6">
-            Não espere ser hackeado para{' '}
-            <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              agir
-            </span>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 font-mono tracking-tight">
+            &lt;INITIATE_SCAN_NOW/&gt;
           </h2>
-          <p className="text-gray-400 text-lg mb-10 max-w-2xl mx-auto">
-            Milhares de apps estão online com falhas graves. O seu pode ser o próximo alvo. Descubra em 30 segundos se você está seguro ou exposto.
+          <p className="text-gray-600 text-sm mb-10 max-w-2xl mx-auto font-mono">
+            // Don't wait for a breach. Proactive security assessment in 30 seconds.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button onClick={() => goToApp(true)} className="btn-primary text-lg px-10 py-4 shadow-xl shadow-blue-600/20 flex items-center gap-2">
-              Analisar agora
-              <ArrowRight className="w-5 h-5" />
+            <button onClick={() => goToApp(true)} className="bg-green-600/20 text-green-400 border border-green-500/50 hover:bg-green-600/30 px-8 py-3 text-sm font-mono uppercase tracking-wider transition-all flex items-center gap-2">
+              &lt;EXECUTE_SCAN/&gt;
+              <ArrowRight className="w-4 h-4" />
             </button>
-            <p className="text-gray-500 text-sm flex items-center gap-1.5">
-              <Clock className="w-4 h-4" />
-              Leva menos de 30 segundos
+            <p className="text-gray-600 text-xs font-mono flex items-center gap-1.5">
+              <Clock className="w-3 h-3" />
+              &lt;30s_execution_time/&gt;
             </p>
           </div>
         </div>
       </section>
 
       {/* ═══════ FOOTER ═══════ */}
-      <footer className="border-t border-gray-800/50 bg-gray-950">
+      <footer className="border-t border-green-900/20 bg-black">
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
             <div className="md:col-span-2">
-              <div className="flex items-center gap-2.5 mb-4">
-                <Image src="/favicon-32x32.png" alt="DevGuard IA" width={24} height={24} className="rounded-sm" />
-                <span className="font-bold text-lg">
-                  Dev<span className="text-blue-500">Guard</span> IA
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-6 h-6 bg-green-500/20 border border-green-500/50 flex items-center justify-center">
+                  <Terminal className="w-4 h-4 text-green-500" />
+                </div>
+                <span className="font-bold text-sm font-mono tracking-wider">
+                  DEV<span className="text-green-500">GUARD</span>
                 </span>
               </div>
-              <p className="text-gray-500 text-sm max-w-sm leading-relaxed">
-                Plataforma de análise de segurança automatizada com inteligência artificial
-                para aplicações web modernas.
+              <p className="text-gray-600 text-xs max-w-sm leading-relaxed font-mono">
+                // Automated security assessment platform with AI-powered vulnerability detection
               </p>
             </div>
             <div>
-              <h4 className="font-semibold text-sm text-gray-300 mb-4">Produto</h4>
-              <ul className="space-y-2.5">
-                <li><a href="#features" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Recursos</a></li>
-                <li><a href="#pricing" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Preços</a></li>
-                <li><a href="#how-it-works" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Como funciona</a></li>
+              <h4 className="font-mono text-xs text-green-400 mb-4 uppercase tracking-wider">
+                [MODULES]
+              </h4>
+              <ul className="space-y-2">
+                <li><a href="#features" className="text-gray-600 hover:text-green-400 text-xs font-mono transition-colors">features</a></li>
+                <li><a href="#pricing" className="text-gray-600 hover:text-green-400 text-xs font-mono transition-colors">pricing</a></li>
+                <li><a href="#how-it-works" className="text-gray-600 hover:text-green-400 text-xs font-mono transition-colors">docs</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-sm text-gray-300 mb-4">Legal</h4>
-              <ul className="space-y-2.5">
-                <li><a href="/terms" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Termos de uso</a></li>
-                <li><a href="/privacy" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Privacidade</a></li>
+              <h4 className="font-mono text-xs text-green-400 mb-4 uppercase tracking-wider">
+                [LEGAL]
+              </h4>
+              <ul className="space-y-2">
+                <li><a href="/terms" className="text-gray-600 hover:text-green-400 text-xs font-mono transition-colors">terms</a></li>
+                <li><a href="/privacy" className="text-gray-600 hover:text-green-400 text-xs font-mono transition-colors">privacy</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800/50 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-gray-600 text-sm">© 2026 DevGuard IA. Todos os direitos reservados.</p>
-            <p className="text-gray-600 text-xs flex items-center gap-1.5">
-              Feito com <ShieldCheck className="w-3.5 h-3.5 text-blue-500" /> para devs que se importam com segurança
+          <div className="border-t border-green-900/20 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-gray-700 text-xs font-mono">© 2026 DevGuard. All systems operational.</p>
+            <p className="text-gray-700 text-[10px] font-mono flex items-center gap-1.5">
+              <span className="text-green-500">root@devguard:~$</span>
+              <span>security_first</span>
             </p>
           </div>
         </div>
@@ -655,12 +670,12 @@ export default function LandingPage() {
 /* ─── Data ─── */
 
 const featureColors = [
-  'bg-blue-950/80 text-blue-400',
-  'bg-purple-950/80 text-purple-400',
-  'bg-cyan-950/80 text-cyan-400',
-  'bg-orange-950/80 text-orange-400',
   'bg-green-950/80 text-green-400',
   'bg-red-950/80 text-red-400',
+  'bg-yellow-950/80 text-yellow-400',
+  'bg-cyan-950/80 text-cyan-400',
+  'bg-purple-950/80 text-purple-400',
+  'bg-orange-950/80 text-orange-400',
 ];
 
 const features = [

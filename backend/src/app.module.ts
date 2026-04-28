@@ -13,6 +13,8 @@ import { QueueModule } from './modules/queue/queue.module';
 import { AiModule } from './modules/ai/ai.module';
 import { VulnerabilitiesModule } from './modules/vulnerabilities/vulnerabilities.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { HealthModule } from './modules/health/health.module';
+import { CleanupModule } from './modules/cleanup/cleanup.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { AdminModule } from './modules/admin/admin.module';
     AiModule,
     VulnerabilitiesModule,
     AdminModule,
+    HealthModule,
+    CleanupModule,
   ],
   providers: [
     {
