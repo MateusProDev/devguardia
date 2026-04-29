@@ -9,6 +9,7 @@ export class ScanProcessor {
   private readonly nmapService: NmapService;
   private readonly httpService: HttpAnalyzerService;
   private readonly aiService: AiWorkerService;
+  private readonly processingScans = new Set<string>();
 
   constructor(private readonly prisma: PrismaClient) {
     this.nmapService = new NmapService();
@@ -20,16 +21,33 @@ export class ScanProcessor {
     const { scanId } = job.data;
     const startTime = Date.now();
 
-    console.log(`[SCAN ${scanId}] Starting scan...`);
-
-    await this.prisma.scan.update({
-      where: { id: scanId },
-      data: { status: 'RUNNING' },
-    });
+    // Prevenir processamento duplicado do mesmo scan
+    if (this.processingScans.has(scanId)) {
+      console.warn(`[SCAN ${scanId}] Already processing, skipping duplicate job`);
+      return;
+    }
+    this.processingScans.add(scanId);
 
     try {
+      console.log(`[SCAN ${scanId}] Starting scan...`);
+
+      // Verificar se scan existe e não está já completado
       const scan = await this.prisma.scan.findUnique({ where: { id: scanId } });
-      if (!scan) throw new Error(`Scan ${scanId} not found`);
+      if (!scan) {
+        console.error(`[SCAN ${scanId}] Scan not found in database`);
+        throw new Error(`Scan ${scanId} not found`);
+      }
+
+      // Se scan já está completado ou falhou, não processar novamente
+      if (scan.status === 'COMPLETED' || scan.status === 'FAILED') {
+        console.warn(`[SCAN ${scanId}] Scan already in status ${scan.status}, skipping`);
+        return;
+      }
+
+      await this.prisma.scan.update({
+        where: { id: scanId },
+        data: { status: 'RUNNING' },
+      });
 
       const url = new URL(scan.url);
       const hostname = url.hostname;
@@ -99,6 +117,8 @@ export class ScanProcessor {
         data: { status: 'FAILED', errorMsg: String(err) },
       });
       throw err;
+    } finally {
+      this.processingScans.delete(scanId);
     }
   }
 }

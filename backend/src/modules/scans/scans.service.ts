@@ -16,6 +16,7 @@ import { LIMITS } from '../../common/config/limits.config';
 export class ScansService {
   private readonly FREE_DAILY_LIMIT = LIMITS.FREE_DAILY_SCAN_LIMIT;
   private readonly FREE_VULN_LIMIT = LIMITS.FREE_VULNERABILITY_LIMIT;
+  private readonly SCAN_DEDUP_WINDOW_MS = LIMITS.SCAN_DEDUP_WINDOW_MS;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -54,6 +55,22 @@ export class ScansService {
     const parsedUrl = new URL(url);
     if (await isPrivateIP(parsedUrl.hostname)) {
       throw new BadRequestException('Escaneamento de IPs internos não é permitido.');
+    }
+
+    // Deduplicação: verificar se existe scan recente para o mesmo URL
+    const recentScan = await this.prisma.scan.findFirst({
+      where: {
+        userId,
+        url,
+        status: { in: ['QUEUED', 'RUNNING'] },
+        createdAt: {
+          gte: new Date(Date.now() - this.SCAN_DEDUP_WINDOW_MS),
+        },
+      },
+    });
+
+    if (recentScan) {
+      throw new BadRequestException('Já existe um scan em andamento para este URL. Aguarde a conclusão.');
     }
 
     const hasSub = await this.usersService.hasActiveSubscription(userId);

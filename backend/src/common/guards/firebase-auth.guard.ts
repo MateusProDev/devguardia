@@ -4,13 +4,40 @@ import {
   ExecutionContext,
   UnauthorizedException,
   Inject,
+  OnModuleDestroy,
 } from '@nestjs/common';
 import { FirebaseAdminService } from '../../modules/auth/firebase-admin.service';
 import { UsersService } from '../../modules/users/users.service';
 import Redis from 'ioredis';
 
+// Singleton Redis connection para evitar vazamento
+let redisSingleton: Redis | null = null;
+
+function getRedisConnection(): Redis {
+  if (redisSingleton) return redisSingleton;
+  
+  const redisUrl = process.env.REDIS_URL;
+  if (redisUrl) {
+    redisSingleton = new Redis(redisUrl, {
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+      ...(redisUrl.startsWith('rediss://') ? { tls: { rejectUnauthorized: true } } : {}),
+    });
+  } else {
+    redisSingleton = new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6379'),
+      password: process.env.REDIS_PASSWORD || undefined,
+      maxRetriesPerRequest: null,
+    });
+  }
+  
+  redisSingleton.on('error', (err) => console.error('[Redis Auth Guard] Error:', err.message));
+  return redisSingleton;
+}
+
 @Injectable()
-export class FirebaseAuthGuard implements CanActivate {
+export class FirebaseAuthGuard implements CanActivate, OnModuleDestroy {
   private readonly CACHE_TTL = 60; // segundos
   private readonly redis: Redis;
 
@@ -18,21 +45,7 @@ export class FirebaseAuthGuard implements CanActivate {
     private readonly firebaseAdmin: FirebaseAdminService,
     private readonly usersService: UsersService,
   ) {
-    // Inicializar Redis connection
-    const redisUrl = process.env.REDIS_URL;
-    if (redisUrl) {
-      this.redis = new Redis(redisUrl, {
-        maxRetriesPerRequest: null,
-        enableReadyCheck: false,
-        ...(redisUrl.startsWith('rediss://') ? { tls: { rejectUnauthorized: true } } : {}),
-      });
-    } else {
-      this.redis = new Redis({
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-        maxRetriesPerRequest: null,
-      });
-    }
+    this.redis = getRedisConnection();
   }
 
   private getCacheKey(uid: string): string {
@@ -77,12 +90,13 @@ export class FirebaseAuthGuard implements CanActivate {
       
       request.user = user;
       return true;
-    } catch {
+    } catch (err) {
+      console.error('[Auth Guard] Token verification failed:', err);
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
 
   async onModuleDestroy() {
-    await this.redis.quit();
+    // Não fechar conexão singleton - compartilhada entre instâncias
   }
 }

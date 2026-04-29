@@ -5,7 +5,7 @@ export const LIMITS = {
   FREE_VULNERABILITY_LIMIT: 2,
   
   // Limites de tempo
-  SCAN_EXPIRY_MINUTES: 2,
+  SCAN_EXPIRY_MINUTES: 5, // Aumentado para 5 minutos
   AI_TIMEOUT_MS: 30000,
   HTTP_TIMEOUT_MS: 15000,
   HTTP_REDIRECT_TIMEOUT_MS: 5000,
@@ -14,6 +14,7 @@ export const LIMITS = {
   MERCADOPAGO_STATUS_TIMEOUT_MS: 10000,
   MERCADOPAGO_INSTALLMENTS_TIMEOUT_MS: 15000,
   DNS_LOOKUP_TIMEOUT_MS: 5000,
+  NMAP_TIMEOUT_MS: 20000,
   
   // Limites de cache
   AUTH_CACHE_TTL_SECONDS: 60,
@@ -21,6 +22,8 @@ export const LIMITS = {
   // Limites de rate limiting
   WEBHOOK_RATE_LIMIT_TTL_MS: 60000,
   WEBHOOK_RATE_LIMIT_MAX: 100,
+  SCAN_RATE_LIMIT_TTL_MS: 60000,
+  SCAN_RATE_LIMIT_MAX: 3,
   
   // Limites de fila
   WORKER_CONCURRENCY: 2,
@@ -35,6 +38,11 @@ export const LIMITS = {
   
   // Limites de retenção de dados
   PAGEVIEW_RETENTION_DAYS: 90,
+  SCAN_DEDUP_WINDOW_MS: 60000, // 1 minuto para deduplicação
+  
+  // Limites de segurança
+  MAX_URL_LENGTH: 2048,
+  MAX_CONCURRENT_SCANS_PER_USER: 2,
 } as const;
 
 export const PRICING = {

@@ -1,9 +1,11 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import * as Sentry from '@sentry/node';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
+const logger = new Logger('Bootstrap');
 
 // Inicializar Sentry se configurado
 if (process.env.SENTRY_DSN) {
@@ -13,6 +15,7 @@ if (process.env.SENTRY_DSN) {
     tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
     profilesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
   });
+  logger.log('Sentry initialized');
 }
 
 async function bootstrap() {
@@ -28,20 +31,22 @@ async function bootstrap() {
   ];
   const missing = required.filter((v) => !process.env[v]);
   if (missing.length > 0) {
-    console.warn(`⚠️  Missing environment variables: ${missing.join(', ')}`);
+    logger.warn(`Missing environment variables: ${missing.join(', ')}`);
     if (process.env.NODE_ENV === 'production') {
       throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
     }
   }
 
   // Validate optional but recommended variables
-  const recommended = ['CLOUDFLARE_AI_TOKEN', 'CLOUDFLARE_ACCOUNT_ID'];
+  const recommended = ['CLOUDFLARE_AI_TOKEN', 'CLOUDFLARE_ACCOUNT_ID', 'WORKER_URL'];
   const missingRecommended = recommended.filter((v) => !process.env[v]);
   if (missingRecommended.length > 0) {
-    console.warn(`⚠️  Missing recommended environment variables (AI features will be limited): ${missingRecommended.join(', ')}`);
+    logger.warn(`Missing recommended environment variables: ${missingRecommended.join(', ')}`);
   }
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: process.env.NODE_ENV === 'production' ? ['error', 'warn', 'log'] : ['error', 'warn', 'log', 'debug'],
+  });
 
   app.use(
     helmet({
@@ -59,9 +64,8 @@ async function bootstrap() {
 
   app.enableCors({
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: string | boolean) => void) => {
-      // Permitir requests sem origin (alguns clients legítimos não enviam)
       if (!origin) {
-        callback(null, allowedOrigins[0]); // Usar primeira origem permitida como default
+        callback(null, allowedOrigins[0]);
       } else if (allowedOrigins.includes(origin)) {
         callback(null, origin);
       } else {
@@ -82,6 +86,12 @@ async function bootstrap() {
     }),
   );
 
+  // Global exception filter for Sentry
+  if (process.env.SENTRY_DSN) {
+    app.use(Sentry.Handlers.requestHandler());
+    app.use(Sentry.Handlers.tracingHandler());
+  }
+
   app.setGlobalPrefix('api');
 
   // Configurar Swagger/OpenAPI
@@ -100,9 +110,17 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
+  if (process.env.SENTRY_DSN) {
+    app.use(Sentry.Handlers.errorHandler());
+  }
+
   const port = process.env.PORT || 3001;
   await app.listen(port);
-  console.log(`DevGuard AI backend running on port ${port}`);
-  console.log(`API documentation available at http://localhost:${port}/api/docs`);
+  logger.log(`DevGuard AI backend running on port ${port}`);
+  logger.log(`API documentation available at http://localhost:${port}/api/docs`);
 }
-bootstrap();
+
+bootstrap().catch((err) => {
+  logger.error('Failed to start application', err);
+  process.exit(1);
+});

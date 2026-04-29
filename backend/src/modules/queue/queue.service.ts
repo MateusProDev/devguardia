@@ -2,24 +2,33 @@ import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/commo
 import { Queue } from 'bullmq';
 import Redis from 'ioredis';
 
+// Singleton Redis connection compartilhada
+let redisSingleton: Redis | null = null;
+
 function getRedisConnection(): Redis {
+  if (redisSingleton) return redisSingleton;
+  
   const url = process.env.REDIS_URL;
   if (url) {
-    return new Redis(url, {
+    redisSingleton = new Redis(url, {
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
       ...(url.startsWith('rediss://') ? { tls: { rejectUnauthorized: true } } : {}),
     });
+  } else {
+    const host = process.env.REDIS_HOST || 'localhost';
+    const port = parseInt(process.env.REDIS_PORT || '6379');
+    const password = process.env.REDIS_PASSWORD || undefined;
+    redisSingleton = new Redis({
+      host,
+      port,
+      password,
+      maxRetriesPerRequest: null,
+    });
   }
-  const host = process.env.REDIS_HOST || 'localhost';
-  const port = parseInt(process.env.REDIS_PORT || '6379');
-  const password = process.env.REDIS_PASSWORD || undefined;
-  return new Redis({
-    host,
-    port,
-    password,
-    maxRetriesPerRequest: null,
-  });
+  
+  redisSingleton.on('error', (err) => console.error('[Redis Queue Service] Error:', err.message));
+  return redisSingleton;
 }
 
 @Injectable()
@@ -33,11 +42,12 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     this.scanQueue = new Queue('scan-queue', {
       connection: this.redisConnection,
     });
+    this.logger.log('Queue service initialized');
   }
 
   async onModuleDestroy() {
     await this.scanQueue?.close();
-    await this.redisConnection?.quit();
+    // Não fechar conexão singleton - compartilhada
   }
 
   /** Wake up the worker on Render free tier by hitting its health endpoint */
