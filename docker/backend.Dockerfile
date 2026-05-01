@@ -1,11 +1,10 @@
-ARG BUILD_TIMESTAMP=1714562400
 FROM node:20-slim AS builder
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
+COPY . .
+RUN rm -rf dist node_modules
 COPY package*.json ./
 RUN npm ci
-COPY . .
-RUN rm -rf dist
 RUN npx prisma generate
 RUN npm run build
 
