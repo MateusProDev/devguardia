@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
-import PgBoss from 'pg-boss';
+import * as PgBoss from 'pg-boss';
 
 @Injectable()
 export class QueueService implements OnModuleInit, OnModuleDestroy {
