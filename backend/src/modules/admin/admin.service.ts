@@ -142,10 +142,10 @@ export class AdminService {
     ]);
 
     // Daily page views for chart
-    const dailyViews = await this.prisma.$queryRawUnsafe<{ date: string; count: bigint }[]>(
+    const dailyViews = await this.prisma.$queryRawUnsafe(
       `SELECT DATE("createdAt") as date, COUNT(*) as count FROM "PageView" WHERE "createdAt" >= $1 GROUP BY DATE("createdAt") ORDER BY date ASC`,
       since,
-    );
+    ) as { date: string; count: bigint }[];
 
     return {
       totalViews: topPages,

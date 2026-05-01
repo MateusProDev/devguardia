@@ -24,8 +24,8 @@ export async function isPrivateIP(hostname: string): Promise<boolean> {
   }
 
   try {
-    // DNS lookup com timeout para prevenir ataques de slowloris
-    const { address } = await dns.lookup(hostname, { timeout: 5000 });
+    // DNS lookup para verificar IP
+    const { address } = await dns.lookup(hostname);
     
     // Proteção contra DNS rebinding: verificar se o hostname resolve para IP privado
     if (isPrivateIPAddress(address)) {
@@ -33,7 +33,7 @@ export async function isPrivateIP(hostname: string): Promise<boolean> {
     }
     
     // Double-check lookup para prevenir DNS rebinding
-    const { address: secondLookup } = await dns.lookup(hostname, { timeout: 5000 });
+    const { address: secondLookup } = await dns.lookup(hostname);
     if (address !== secondLookup) {
       // DNS rebinding detectado - tratar como suspeito
       return true;

@@ -18,8 +18,6 @@ services:
         fromDatabase:
           name: devguard-db
           property: connectionString
-      - key: REDIS_URL
-        sync: false
       - key: FIREBASE_PROJECT_ID
         sync: false
       - key: FIREBASE_CLIENT_EMAIL
@@ -56,8 +54,6 @@ services:
         fromDatabase:
           name: devguard-db
           property: connectionString
-      - key: REDIS_URL
-        sync: false
       - key: CLOUDFLARE_AI_TOKEN
         sync: false
       - key: CLOUDFLARE_ACCOUNT_ID

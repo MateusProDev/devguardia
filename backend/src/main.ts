@@ -22,7 +22,6 @@ async function bootstrap() {
   // Validate required environment variables
   const required = [
     'DATABASE_URL',
-    'REDIS_URL',
     'FIREBASE_PROJECT_ID',
     'FIREBASE_CLIENT_EMAIL',
     'FIREBASE_PRIVATE_KEY',

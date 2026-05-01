@@ -103,7 +103,7 @@ export class ScansService {
       },
     });
 
-    await this.queueService.addScanJob(scan.id);
+    await this.queueService.addScanJob(scan.id, url, userId);
 
     return scan;
   }

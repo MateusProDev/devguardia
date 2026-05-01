@@ -3,50 +3,20 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
-  Inject,
-  OnModuleDestroy,
 } from '@nestjs/common';
 import { FirebaseAdminService } from '../../modules/auth/firebase-admin.service';
 import { UsersService } from '../../modules/users/users.service';
-import Redis from 'ioredis';
-
-// Singleton Redis connection para evitar vazamento
-let redisSingleton: Redis | null = null;
-
-function getRedisConnection(): Redis {
-  if (redisSingleton) return redisSingleton;
-  
-  const redisUrl = process.env.REDIS_URL;
-  if (redisUrl) {
-    redisSingleton = new Redis(redisUrl, {
-      maxRetriesPerRequest: null,
-      enableReadyCheck: false,
-      ...(redisUrl.startsWith('rediss://') ? { tls: { rejectUnauthorized: true } } : {}),
-    });
-  } else {
-    redisSingleton = new Redis({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379'),
-      password: process.env.REDIS_PASSWORD || undefined,
-      maxRetriesPerRequest: null,
-    });
-  }
-  
-  redisSingleton.on('error', (err) => console.error('[Redis Auth Guard] Error:', err.message));
-  return redisSingleton;
-}
+import { LocalCacheService } from '../cache/local-cache.service';
 
 @Injectable()
-export class FirebaseAuthGuard implements CanActivate, OnModuleDestroy {
-  private readonly CACHE_TTL = 60; // segundos
-  private readonly redis: Redis;
+export class FirebaseAuthGuard implements CanActivate {
+  private readonly CACHE_TTL_MS = 60 * 1000; // 60 segundos em milissegundos
 
   constructor(
     private readonly firebaseAdmin: FirebaseAdminService,
     private readonly usersService: UsersService,
-  ) {
-    this.redis = getRedisConnection();
-  }
+    private readonly cache: LocalCacheService,
+  ) {}
 
   private getCacheKey(uid: string): string {
     return `auth:user:${uid}`;
@@ -65,18 +35,13 @@ export class FirebaseAuthGuard implements CanActivate, OnModuleDestroy {
     try {
       const decoded = await this.firebaseAdmin.verifyToken(token);
 
-      // Tentar buscar do cache Redis
+      // Tentar buscar do cache local
       const cacheKey = this.getCacheKey(decoded.uid);
-      const cached = await this.redis.get(cacheKey);
+      const cached = this.cache.get(cacheKey);
       
       if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          request.user = parsed;
-          return true;
-        } catch {
-          // Cache corrompido, continuar com lookup normal
-        }
+        request.user = cached;
+        return true;
       }
 
       const user = await this.usersService.findOrCreate({
@@ -85,8 +50,8 @@ export class FirebaseAuthGuard implements CanActivate, OnModuleDestroy {
         displayName: decoded.name || null,
       });
       
-      // Salvar no cache Redis
-      await this.redis.setex(cacheKey, this.CACHE_TTL, JSON.stringify(user));
+      // Salvar no cache local
+      this.cache.set(cacheKey, user, this.CACHE_TTL_MS);
       
       request.user = user;
       return true;
@@ -94,9 +59,5 @@ export class FirebaseAuthGuard implements CanActivate, OnModuleDestroy {
       console.error('[Auth Guard] Token verification failed:', err);
       throw new UnauthorizedException('Invalid or expired token');
     }
-  }
-
-  async onModuleDestroy() {
-    // Não fechar conexão singleton - compartilhada entre instâncias
   }
 }
