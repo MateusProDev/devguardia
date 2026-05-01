@@ -5,19 +5,19 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 import { api } from '../../services/api';
-import { Shield, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Terminal, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import ScanConsentModal from '../../components/ScanConsentModal';
 import UpgradeModal from '../../components/UpgradeModal';
 
 const checks = [
-  'Certificado SSL/TLS e HTTPS',
-  'Headers de seguranca HTTP (10+ verificacoes)',
-  'Portas abertas e servicos expostos',
-  'Configuracao de CORS',
-  'Seguranca de cookies',
-  'Informacoes sensiveis expostas',
-  'Explicacoes e correcoes com IA',
+  'SSL/TLS certificate validation',
+  'HTTP security headers (10+ checks)',
+  'Open ports & exposed services',
+  'CORS misconfiguration',
+  'Cookie security flags',
+  'Sensitive data exposure',
+  'AI-powered fix generation',
 ];
 
 function ScanPageContent() {
@@ -88,88 +88,110 @@ function ScanPageContent() {
 
   if (!authChecked) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      <div className="min-h-screen bg-black matrix-bg flex items-center justify-center">
+        <div className="flex items-center gap-3 text-green-500 font-mono text-sm">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span>LOADING_MODULE<span className="animate-blink">_</span></span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      <nav className="border-b border-gray-800 px-4 sm:px-6 py-4">
+    <div className="min-h-screen bg-black matrix-bg">
+      <nav className="border-b border-green-900/30 px-4 sm:px-6 py-4 bg-black/80 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <Shield className="w-6 h-6 text-blue-500" />
-            <span className="font-bold text-lg">DevGuard IA</span>
+            <div className="w-7 h-7 bg-green-500/20 border border-green-500/50 flex items-center justify-center">
+              <Terminal className="w-4 h-4 text-green-500" />
+            </div>
+            <span className="font-bold text-sm tracking-wider font-mono">
+              DEV<span className="text-green-500">GUARD</span>
+            </span>
           </Link>
-          <Link href="/dashboard" className="text-gray-400 hover:text-white text-sm transition-colors">
-            &larr; Dashboard
+          <Link href="/dashboard" className="text-gray-600 hover:text-green-400 text-xs transition-colors font-mono">
+            [BACK_TO_DASHBOARD]
           </Link>
         </div>
       </nav>
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-20">
         <div className="text-center mb-8 sm:mb-10">
-          <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-blue-950 border border-blue-800 rounded-2xl mb-5 sm:mb-6">
-            <Shield className="w-7 h-7 sm:w-8 sm:h-8 text-blue-500" />
+          <div className="inline-flex items-center gap-2 text-green-400 text-xs font-mono mb-4 border border-green-500/30 px-3 py-1">
+            <span className="w-1.5 h-1.5 bg-green-500 animate-pulse" />
+            <span>SCAN_MODULE</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold mb-3">Analisar Seguranca</h1>
-          <p className="text-gray-400">
-            Insira a URL do seu site para identificar vulnerabilidades de seguranca.
+          <h1 className="text-2xl sm:text-3xl font-bold mb-3 font-mono tracking-tight">
+            &lt;SECURITY_SCAN/&gt;
+          </h1>
+          <p className="text-gray-600 font-mono text-sm">
+            // Insira a URL do alvo para iniciar a análise
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              URL do site
-            </label>
-            <input
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://meu-app.vercel.app"
-              className="input-field text-lg"
-              required
-              disabled={loading}
-            />
-            <p className="text-gray-500 text-xs mt-2">
-              Somente URLs publicas sao aceitas. IPs privados e localhost sao bloqueados.
-            </p>
+        {/* Terminal-style form */}
+        <div className="border border-green-500/30 bg-black">
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-green-500/20">
+            <div className="w-3 h-3 rounded-full bg-red-500/50" />
+            <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+            <div className="w-3 h-3 rounded-full bg-green-500/50" />
+            <span className="text-gray-600 text-xs ml-2 font-mono">scan_input</span>
           </div>
-
-          {error && (
-            <div className="flex items-start gap-3 p-4 bg-red-950 border border-red-800 rounded-xl text-red-300 text-sm">
-              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-              {error}
+          <form onSubmit={handleSubmit} className="p-5 space-y-4">
+            <div>
+              <div className="flex items-center gap-2 text-green-500 text-xs mb-3 font-mono">
+                <span>$</span>
+                <span className="opacity-70">scan --url</span>
+              </div>
+              <input
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://target-domain.com"
+                className="input-field text-sm"
+                required
+                disabled={loading}
+              />
+              <p className="text-gray-700 text-xs mt-2 font-mono">
+                [INFO] Somente URLs publicas. IPs privados e localhost bloqueados.
+              </p>
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading || !url}
-            className="btn-primary w-full flex items-center justify-center gap-2 text-base py-4"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Iniciando analise...
-              </>
-            ) : (
-              <>
-                Iniciar analise de seguranca
-                <ArrowRight className="w-5 h-5" />
-              </>
+            {error && (
+              <div className="flex items-start gap-3 p-3 bg-red-950/50 border border-red-800/50 text-red-400 text-xs font-mono">
+                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                {error}
+              </div>
             )}
-          </button>
-        </form>
 
-        <div className="mt-8 card">
-          <h3 className="font-semibold mb-3 text-sm text-gray-300">O que sera analisado:</h3>
-          <ul className="space-y-2 text-sm text-gray-400">
-            {checks.map((c) => (
+            <button
+              type="submit"
+              disabled={loading || !url}
+              className="btn-primary w-full flex items-center justify-center gap-2 py-3"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  EXECUTING...
+                </>
+              ) : (
+                <>
+                  &lt;EXECUTE_SCAN/&gt;
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+
+        <div className="mt-6 border border-green-500/20 bg-black p-5">
+          <h3 className="font-mono text-xs text-green-400 mb-3 uppercase tracking-wider">
+            [SCAN_VECTORS]
+          </h3>
+          <ul className="space-y-2 text-xs text-gray-600 font-mono">
+            {checks.map((c, i) => (
               <li key={c} className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                <span className="text-green-500">[+]</span>
                 {c}
               </li>
             ))}
@@ -198,8 +220,11 @@ export default function ScanPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+        <div className="min-h-screen bg-black matrix-bg flex items-center justify-center">
+          <div className="flex items-center gap-3 text-green-500 font-mono text-sm">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span>LOADING<span className="animate-blink">_</span></span>
+          </div>
         </div>
       }
     >

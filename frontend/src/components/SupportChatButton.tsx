@@ -43,45 +43,48 @@ export default function SupportChatButton() {
   return (
     <>
       <button
-        className="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg flex items-center justify-center"
+        className="fixed bottom-6 right-6 z-50 bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-500/50 p-3 shadow-lg flex items-center justify-center transition-all"
         onClick={() => setOpen((v) => !v)}
         aria-label="Abrir chat de suporte"
       >
-        <MessageCircle className="w-6 h-6" />
+        <MessageCircle className="w-5 h-5" />
       </button>
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 w-80 max-w-[95vw] bg-gray-900 border border-gray-800 rounded-xl shadow-2xl flex flex-col">
-          <div className="p-4 border-b border-gray-800 font-semibold text-white flex items-center justify-between">
-            Suporte DevGuard
-            <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-white">×</button>
+        <div className="fixed bottom-24 right-6 z-50 w-80 max-w-[95vw] bg-black border border-green-500/30 shadow-2xl shadow-green-500/5 flex flex-col">
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-green-500/20">
+            <div className="w-3 h-3 rounded-full bg-red-500/50" />
+            <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+            <div className="w-3 h-3 rounded-full bg-green-500/50" />
+            <span className="text-gray-600 text-xs ml-1 font-mono flex-1">support_chat</span>
+            <button onClick={() => setOpen(false)} className="text-gray-600 hover:text-red-400 font-mono text-xs">[X]</button>
           </div>
-          <div ref={chatRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-950 text-sm" style={{ maxHeight: 350 }}>
-            {messages.length === 0 && <div className="text-gray-500 text-center">Nenhuma mensagem ainda.</div>}
+          <div ref={chatRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-black text-xs font-mono" style={{ maxHeight: 350 }}>
+            {messages.length === 0 && <div className="text-gray-700 text-center">// Nenhuma mensagem</div>}
             {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`px-3 py-2 rounded-lg max-w-[80%] ${msg.from === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-200'}`}>
+                <div className={`px-3 py-2 max-w-[80%] ${msg.from === 'user' ? 'bg-green-600/20 text-green-400 border border-green-500/30' : 'bg-gray-900 text-gray-400 border border-gray-800'}`}>
                   {msg.message}
                 </div>
               </div>
             ))}
           </div>
-          <form onSubmit={sendMessage} className="flex items-center gap-2 p-3 border-t border-gray-800 bg-gray-900">
+          <form onSubmit={sendMessage} className="flex items-center gap-2 p-3 border-t border-green-500/20 bg-black">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              className="flex-1 rounded-lg bg-gray-800 text-white px-3 py-2 outline-none border border-gray-700 focus:border-blue-500"
-              placeholder="Digite sua mensagem..."
+              className="flex-1 bg-black/50 text-green-400 px-3 py-2 outline-none border border-green-500/20 focus:border-green-500/50 font-mono text-xs placeholder-gray-700"
+              placeholder="$ mensagem..."
               disabled={loading}
               maxLength={500}
               required
             />
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+              className="bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-500/50 px-3 py-2 disabled:opacity-40 font-mono text-xs"
               disabled={loading || !input.trim()}
             >
-              Enviar
+              [SEND]
             </button>
           </form>
         </div>

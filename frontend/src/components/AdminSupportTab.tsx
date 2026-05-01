@@ -125,19 +125,19 @@ export default function AdminSupportTab() {
 
   return (
     <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">Suporte - Mensagens dos Usuários</h2>
-      {!authChecked && <div className="text-gray-400">Verificando autenticação...</div>}
-      {authChecked && !isAdmin && <div className="text-yellow-400">Acesso restrito: faça login como admin.</div>}
-      {authChecked && isAdmin && chats.length === 0 && <div className="text-gray-500">Nenhuma conversa encontrada.</div>}
-      <div className="space-y-8">
+      <h2 className="text-sm font-mono font-bold mb-4 text-green-400">[SUPPORT_MESSAGES]</h2>
+      {!authChecked && <div className="text-gray-600 text-xs font-mono">// Verificando autenticação...</div>}
+      {authChecked && !isAdmin && <div className="text-yellow-400 text-xs font-mono">[ACCESS_RESTRICTED] // faça login como admin</div>}
+      {authChecked && isAdmin && chats.length === 0 && <div className="text-gray-600 text-xs font-mono">// Nenhuma conversa encontrada</div>}
+      <div className="space-y-6">
         {chats.map((chat) => (
-          <div key={chat.userId} className="border border-gray-800 rounded-lg p-4 bg-gray-900">
-            <div className="font-semibold text-blue-400 mb-2">Usuário: {chat.userId}</div>
+          <div key={chat.userId} className="border border-green-500/20 p-4 bg-black">
+            <div className="text-xs font-mono text-green-400 mb-2">user: {chat.userId}</div>
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {chat.messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`px-3 py-2 rounded-lg max-w-[80%] ${msg.from === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-200'}`}>
-                    <span className="block text-xs text-gray-400 mb-1">{msg.from === 'user' ? 'Usuário' : 'Suporte'}</span>
+                  <div className={`px-3 py-2 max-w-[80%] text-xs font-mono ${msg.from === 'user' ? 'bg-green-600/20 text-green-400 border border-green-500/30' : 'bg-gray-900 text-gray-400 border border-gray-800'}`}>
+                    <span className="block text-[10px] text-gray-600 mb-1">{msg.from === 'user' ? '// user' : '// support'}</span>
                     {msg.message}
                   </div>
                 </div>

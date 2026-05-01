@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
 import { api } from '../../../services/api';
-import { Shield, Lock, AlertTriangle, CheckCircle, Loader2, RefreshCw, CreditCard } from 'lucide-react';
+import { Terminal, Lock, AlertTriangle, CheckCircle, Loader2, RefreshCw, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import ScoreCard from '../../../components/ScoreCard';
 import VulnerabilityList from '../../../components/VulnerabilityList';
@@ -85,18 +85,21 @@ export default function ReportPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      <div className="min-h-screen bg-black matrix-bg flex items-center justify-center">
+        <div className="flex items-center gap-3 text-green-500 font-mono text-sm">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span>LOADING_REPORT<span className="animate-blink">_</span></span>
+        </div>
       </div>
     );
   }
 
   if (!report) {
     return (
-      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center gap-4">
-        <p className="text-gray-400">Relatório não encontrado.</p>
-        <Link href="/dashboard" className="btn-primary text-sm">
-          ← Dashboard
+      <div className="min-h-screen bg-black matrix-bg flex flex-col items-center justify-center gap-4">
+        <p className="text-gray-600 font-mono text-sm">[ERROR] REPORT_NOT_FOUND</p>
+        <Link href="/dashboard" className="btn-primary text-xs">
+          [BACK_TO_DASHBOARD]
         </Link>
       </div>
     );
@@ -105,15 +108,19 @@ export default function ReportPage() {
   const isScanning = report.status === 'RUNNING' || report.status === 'QUEUED';
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      <nav className="border-b border-gray-800 px-4 sm:px-6 py-4">
+    <div className="min-h-screen bg-black matrix-bg">
+      <nav className="border-b border-green-900/30 px-4 sm:px-6 py-4 bg-black/80 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <Shield className="w-6 h-6 text-blue-500" />
-            <span className="font-bold">DevGuard IA</span>
+            <div className="w-7 h-7 bg-green-500/20 border border-green-500/50 flex items-center justify-center">
+              <Terminal className="w-4 h-4 text-green-500" />
+            </div>
+            <span className="font-bold text-sm tracking-wider font-mono">
+              DEV<span className="text-green-500">GUARD</span>
+            </span>
           </Link>
-          <Link href="/dashboard" className="text-gray-400 hover:text-white text-sm">
-            ← Dashboard
+          <Link href="/dashboard" className="text-gray-600 hover:text-green-400 text-xs transition-colors font-mono">
+            [BACK_TO_DASHBOARD]
           </Link>
         </div>
       </nav>
@@ -122,9 +129,12 @@ export default function ReportPage() {
         {/* Report header */}
         <div className="flex flex-col gap-4 mb-8">
           <div className="min-w-0">
-            <p className="text-gray-400 text-sm mb-1">Relatório de segurança</p>
-            <h1 className="text-lg sm:text-xl font-bold break-all">{report.url}</h1>
-            <p className="text-gray-500 text-xs mt-1">
+            <div className="flex items-center gap-2 text-green-400 text-xs font-mono mb-2">
+              <span className="w-1.5 h-1.5 bg-green-500 animate-pulse" />
+              <span>SCAN_REPORT</span>
+            </div>
+            <h1 className="text-sm sm:text-base font-mono break-all text-gray-300">{report.url}</h1>
+            <p className="text-gray-700 text-xs mt-1 font-mono">
               {new Date(report.createdAt).toLocaleDateString('pt-BR', {
                 day: '2-digit', month: 'long', year: 'numeric',
                 hour: '2-digit', minute: '2-digit',
@@ -132,9 +142,9 @@ export default function ReportPage() {
             </p>
           </div>
           {isScanning && (
-            <div className="flex items-center gap-2 text-yellow-400 font-medium text-sm">
-              <RefreshCw className="w-4 h-4 animate-spin" />
-              Análise em andamento...
+            <div className="flex items-center gap-2 text-yellow-500 text-xs font-mono">
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              SCAN_IN_PROGRESS...
             </div>
           )}
         </div>
@@ -142,10 +152,10 @@ export default function ReportPage() {
         {/* Score */}
         {isScanning ? (
           <div className="card flex items-center gap-4 mb-6">
-            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-            <div>
-              <p className="font-semibold">Analisando seu site...</p>
-              <p className="text-gray-400 text-sm">Isso leva até 30 segundos.</p>
+            <Loader2 className="w-6 h-6 text-green-500 animate-spin" />
+            <div className="font-mono">
+              <p className="text-sm text-green-400">SCANNING_TARGET...</p>
+              <p className="text-gray-600 text-xs">// Estimativa: 30 segundos</p>
             </div>
           </div>
         ) : (
@@ -154,28 +164,28 @@ export default function ReportPage() {
 
         {/* Limited banner */}
         {report.isLimited && !isScanning && (
-          <div className="card mb-6 bg-blue-950 border-blue-800">
+          <div className="card mb-6 border-yellow-500/30">
             <div className="flex flex-col gap-4">
               <div className="flex items-start gap-3">
-                <Lock className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-blue-300">
-                    {report.vulnerabilities.length > 0 ? 'Relatório parcial' : 'Vulnerabilidades encontradas'}
+                <Lock className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
+                <div className="font-mono">
+                  <p className="text-sm text-yellow-400">
+                    {report.vulnerabilities.length > 0 ? '[PARTIAL_REPORT]' : '[LOCKED_REPORT]'}
                   </p>
-                  <p className="text-blue-400 text-sm">
+                  <p className="text-gray-600 text-xs mt-1">
                     {report.vulnerabilities.length > 0
-                      ? `Você está vendo ${report.vulnerabilities.length} de ${Object.values(report.summary || {}).reduce((a, b) => a + b, 0)} vulnerabilidades. Desbloqueie para ver todas com correções e explicações de IA.`
-                      : `Foram encontradas ${Object.values(report.summary || {}).reduce((a, b) => a + b, 0)} vulnerabilidades. Desbloqueie o relatório completo para ver os detalhes e as correções com IA.`
+                      ? `Visualizando ${report.vulnerabilities.length} de ${Object.values(report.summary || {}).reduce((a, b) => a + b, 0)} vulnerabilidades. Desbloqueie para acesso completo.`
+                      : `${Object.values(report.summary || {}).reduce((a, b) => a + b, 0)} vulnerabilidades detectadas. Desbloqueie para ver detalhes e correções com IA.`
                     }
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setUpgradeOpen(true)}
-                className="btn-primary flex items-center justify-center gap-2 text-sm whitespace-nowrap w-full sm:w-auto sm:self-end"
+                className="btn-primary flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto sm:self-end"
               >
                 <CreditCard className="w-4 h-4" />
-                Desbloquear por R$9,90
+                &lt;UNLOCK_R$9,90/&gt;
               </button>
             </div>
           </div>
@@ -192,17 +202,17 @@ export default function ReportPage() {
 
         {!isScanning && !report.isLimited && report.vulnerabilities.length === 0 && report.status === 'COMPLETED' && (
           <div className="card text-center py-12">
-            <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhuma vulnerabilidade encontrada!</h3>
-            <p className="text-gray-400 text-sm">Seu site passou em todas as verificações.</p>
+            <CheckCircle className="w-10 h-10 text-green-500 mx-auto mb-4" />
+            <h3 className="text-sm font-mono font-semibold mb-2 text-green-400">ALL_CHECKS_PASSED</h3>
+            <p className="text-gray-600 text-xs font-mono">// Nenhuma vulnerabilidade detectada</p>
           </div>
         )}
 
         {report.status === 'FAILED' && (
           <div className="card text-center py-12">
-            <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Falha na análise</h3>
-            <p className="text-gray-400 text-sm">Não foi possível analisar este site. Verifique se está acessível.</p>
+            <AlertTriangle className="w-10 h-10 text-red-500 mx-auto mb-4" />
+            <h3 className="text-sm font-mono font-semibold mb-2 text-red-400">SCAN_FAILED</h3>
+            <p className="text-gray-600 text-xs font-mono">// Não foi possível analisar este alvo. Verifique se está acessível.</p>
           </div>
         )}
       </div>

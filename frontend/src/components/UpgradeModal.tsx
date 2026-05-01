@@ -299,23 +299,23 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
   const planLabel = selectedType === 'SINGLE_SCAN' ? 'Scan Avulso' : 'Assinatura Mensal';
 
   const stepTitle: Record<Step, string> = {
-    'choose-plan': 'Desbloquear Relatório Completo',
-    'choose-method': 'Forma de Pagamento',
-    card: 'Pagamento com Cartão',
-    pix: 'Pagamento via PIX',
+    'choose-plan': '[UNLOCK_FULL_REPORT]',
+    'choose-method': '[PAYMENT_METHOD]',
+    card: '[CARD_PAYMENT]',
+    pix: '[PIX_PAYMENT]',
   };
 
   // --- Success screen ---
   if (success) {
     return (
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-        <div className="relative bg-gray-900 border border-gray-700 rounded-t-2xl sm:rounded-2xl w-full max-w-md shadow-2xl p-8 text-center">
-          <div className="w-16 h-16 bg-green-950 border border-green-700 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 className="w-8 h-8 text-green-400" />
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+        <div className="relative bg-black border border-green-500/30 w-full max-w-md shadow-2xl shadow-green-500/5 p-8 text-center">
+          <div className="w-14 h-14 bg-green-500/10 border border-green-500/30 flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="w-7 h-7 text-green-400" />
           </div>
-          <h2 className="text-xl font-bold mb-2">Pagamento Aprovado!</h2>
-          <p className="text-gray-400">Seu relatório completo será liberado em instantes.</p>
+          <h2 className="text-sm font-mono font-bold mb-2 text-green-400">PAYMENT_APPROVED</h2>
+          <p className="text-gray-600 text-xs font-mono">// Relatório completo será liberado em instantes</p>
         </div>
       </div>
     );
@@ -323,28 +323,34 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative bg-gray-900 border border-gray-700 rounded-t-2xl sm:rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-800">
+      <div className="relative bg-black border border-green-500/30 w-full max-w-lg shadow-2xl shadow-green-500/5 max-h-[90vh] overflow-y-auto">
+        {/* Terminal Header */}
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-green-500/20">
+          <div className="w-3 h-3 rounded-full bg-red-500/50" />
+          <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+          <div className="w-3 h-3 rounded-full bg-green-500/50" />
+          <span className="text-gray-600 text-xs ml-2 font-mono flex-1">payment_terminal</span>
+          <button onClick={onClose} className="text-gray-600 hover:text-red-400 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-green-500/10">
           <div className="flex items-center gap-3">
             {step !== 'choose-plan' && (
-              <button onClick={goBack} className="text-gray-400 hover:text-white transition-colors">
-                <ArrowLeft className="w-5 h-5" />
+              <button onClick={goBack} className="text-gray-600 hover:text-green-400 transition-colors">
+                <ArrowLeft className="w-4 h-4" />
               </button>
             )}
-            <h2 className="text-lg sm:text-xl font-bold">{stepTitle[step]}</h2>
+            <h2 className="text-sm font-mono font-bold text-green-400 uppercase tracking-wider">{stepTitle[step]}</h2>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
         <div className="p-4 sm:p-6">
           {error && (
-            <div className="p-3 mb-4 bg-red-950 border border-red-800 rounded-lg text-red-300 text-sm flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <div className="p-3 mb-4 border border-red-800/50 text-red-400 text-xs font-mono flex items-start gap-2">
+              <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
               {error}
             </div>
           )}
@@ -354,24 +360,24 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
             <div className="space-y-4">
               <button
                 onClick={() => selectPlan('SINGLE_SCAN')}
-                className="w-full text-left border border-gray-700 hover:border-blue-600 rounded-xl p-5 transition-all"
+                className="w-full text-left border border-green-500/20 hover:border-green-500/50 p-5 transition-all"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-950 border border-blue-800 rounded-lg flex items-center justify-center">
-                      <CreditCard className="w-5 h-5 text-blue-400" />
+                    <div className="w-8 h-8 bg-green-500/10 border border-green-500/30 flex items-center justify-center">
+                      <CreditCard className="w-4 h-4 text-green-400" />
                     </div>
-                    <div>
-                      <p className="font-semibold">Scan Avulso</p>
-                      <p className="text-gray-400 text-sm">Acesso completo para este scan</p>
+                    <div className="font-mono">
+                      <p className="text-sm text-green-400">SINGLE_SCAN</p>
+                      <p className="text-gray-600 text-xs">// Acesso completo para este scan</p>
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-white">R$9,90</span>
+                  <span className="text-xl font-bold text-white font-mono">R$9,90</span>
                 </div>
                 <ul className="space-y-1.5">
                   {['Todas as vulnerabilidades', 'Soluções detalhadas', 'Explicações com IA', 'Código de correção'].map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                    <li key={f} className="flex items-center gap-2 text-xs text-gray-500 font-mono">
+                      <span className="text-green-500">[+]</span>
                       {f}
                     </li>
                   ))}
@@ -380,37 +386,37 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
 
               <button
                 onClick={() => selectPlan('SUBSCRIPTION')}
-                className="w-full text-left border border-blue-600 rounded-xl p-5 ring-1 ring-blue-600 bg-blue-950/20 transition-all"
+                className="w-full text-left border border-green-500/50 p-5 ring-1 ring-green-500/20 transition-all"
               >
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full font-semibold">
-                    MELHOR VALOR
+                  <span className="text-[10px] bg-green-500 text-black px-2 py-0.5 font-bold font-mono uppercase tracking-wider">
+                    [RECOMMENDED]
                   </span>
                 </div>
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-950 border border-blue-700 rounded-lg flex items-center justify-center">
-                      <Zap className="w-5 h-5 text-blue-400" />
+                    <div className="w-8 h-8 bg-green-500/10 border border-green-500/30 flex items-center justify-center">
+                      <Zap className="w-4 h-4 text-green-400" />
                     </div>
-                    <div>
-                      <p className="font-semibold">Assinatura Mensal</p>
-                      <p className="text-gray-400 text-sm">Scans ilimitados por 30 dias</p>
+                    <div className="font-mono">
+                      <p className="text-sm text-green-400">SUBSCRIPTION_PRO</p>
+                      <p className="text-gray-600 text-xs">// Scans ilimitados por 30 dias</p>
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-white">R$39,90</span>
+                  <span className="text-xl font-bold text-white font-mono">R$39,90</span>
                 </div>
                 <ul className="space-y-1.5">
                   {['Tudo do Scan Avulso', 'Scans ilimitados', 'Acesso a todos os relatórios', 'Novos checks automáticos'].map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                    <li key={f} className="flex items-center gap-2 text-xs text-gray-500 font-mono">
+                      <span className="text-green-500">[+]</span>
                       {f}
                     </li>
                   ))}
                 </ul>
               </button>
 
-              <p className="text-center text-xs text-gray-500">
-                Pagamento seguro processado via Mercado Pago.
+              <p className="text-center text-[10px] text-gray-700 font-mono">
+                // Pagamento seguro via Mercado Pago
               </p>
             </div>
           )}
@@ -418,42 +424,42 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
           {/* ===== STEP 2: Choose Payment Method ===== */}
           {step === 'choose-method' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg text-sm">
-                <span className="text-gray-300">{planLabel}</span>
-                <span className="font-bold text-white">R${priceLabel}</span>
+              <div className="flex items-center justify-between p-3 border border-green-500/20 text-xs font-mono">
+                <span className="text-gray-500">{planLabel}</span>
+                <span className="font-bold text-green-400">R${priceLabel}</span>
               </div>
 
               <button
                 onClick={() => setStep('card')}
-                className="w-full flex items-center gap-4 border border-gray-700 hover:border-blue-600 rounded-xl p-4 transition-all text-left"
+                className="w-full flex items-center gap-4 border border-green-500/20 hover:border-green-500/50 p-4 transition-all text-left"
               >
-                <div className="w-12 h-12 bg-blue-950 border border-blue-800 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <CreditCard className="w-6 h-6 text-blue-400" />
+                <div className="w-10 h-10 bg-green-500/10 border border-green-500/30 flex items-center justify-center flex-shrink-0">
+                  <CreditCard className="w-5 h-5 text-green-400" />
                 </div>
-                <div className="flex-1">
-                  <p className="font-semibold">Cartão de Crédito</p>
-                  <p className="text-gray-400 text-sm">Visa, Mastercard, Elo, Amex...</p>
+                <div className="flex-1 font-mono">
+                  <p className="text-sm text-green-400">CREDIT_CARD</p>
+                  <p className="text-gray-600 text-xs">Visa, Mastercard, Elo, Amex</p>
                 </div>
-                <ArrowLeft className="w-4 h-4 text-gray-500 rotate-180" />
+                <ArrowLeft className="w-3.5 h-3.5 text-gray-600 rotate-180" />
               </button>
 
               <button
                 onClick={() => setStep('pix')}
-                className="w-full flex items-center gap-4 border border-gray-700 hover:border-green-600 rounded-xl p-4 transition-all text-left"
+                className="w-full flex items-center gap-4 border border-green-500/20 hover:border-green-500/50 p-4 transition-all text-left"
               >
-                <div className="w-12 h-12 bg-green-950 border border-green-800 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <QrCode className="w-6 h-6 text-green-400" />
+                <div className="w-10 h-10 bg-green-500/10 border border-green-500/30 flex items-center justify-center flex-shrink-0">
+                  <QrCode className="w-5 h-5 text-green-400" />
                 </div>
-                <div className="flex-1">
-                  <p className="font-semibold">PIX</p>
-                  <p className="text-gray-400 text-sm">Aprovação instantânea</p>
+                <div className="flex-1 font-mono">
+                  <p className="text-sm text-green-400">PIX</p>
+                  <p className="text-gray-600 text-xs">// Aprovação instantânea</p>
                 </div>
-                <ArrowLeft className="w-4 h-4 text-gray-500 rotate-180" />
+                <ArrowLeft className="w-3.5 h-3.5 text-gray-600 rotate-180" />
               </button>
 
-              <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
+              <div className="flex items-center justify-center gap-1.5 text-[10px] text-gray-700 font-mono">
                 <Lock className="w-3 h-3" />
-                Pagamento seguro e criptografado
+                // Pagamento seguro e criptografado
               </div>
             </div>
           )}
@@ -461,13 +467,13 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
           {/* ===== STEP 3A: Card Form ===== */}
           {step === 'card' && (
             <form onSubmit={handleCardSubmit} className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg text-sm">
-                <span className="text-gray-300">{planLabel}</span>
-                <span className="font-bold text-white">R${priceLabel}</span>
+              <div className="flex items-center justify-between p-3 border border-green-500/20 text-xs font-mono">
+                <span className="text-gray-500">{planLabel}</span>
+                <span className="font-bold text-green-400">R${priceLabel}</span>
               </div>
 
               <div>
-                <label className="block text-sm text-gray-400 mb-1.5">E-mail do pagador</label>
+                <label className="block text-xs text-gray-600 mb-1.5 font-mono">// E-mail do pagador</label>
                 <input
                   type="email"
                   required
@@ -479,7 +485,7 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
               </div>
 
               <div>
-                <label className="block text-sm text-gray-400 mb-1.5">Número do cartão</label>
+                <label className="block text-xs text-gray-600 mb-1.5 font-mono">// Número do cartão</label>
                 <div className="relative">
                   <input
                     type="text"
@@ -501,7 +507,7 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
               </div>
 
               <div>
-                <label className="block text-sm text-gray-400 mb-1.5">Nome no cartão</label>
+                <label className="block text-xs text-gray-600 mb-1.5 font-mono">// Nome no cartão</label>
                 <input
                   type="text"
                   required
@@ -515,7 +521,7 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1.5">Validade</label>
+                  <label className="block text-xs text-gray-600 mb-1.5 font-mono">// Validade</label>
                   <input
                     type="text"
                     required
@@ -529,7 +535,7 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1.5">CVV</label>
+                  <label className="block text-xs text-gray-600 mb-1.5 font-mono">// CVV</label>
                   <input
                     type="text"
                     required
@@ -546,7 +552,7 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
 
               {installmentOptions.length > 1 && (
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1.5">Parcelas</label>
+                  <label className="block text-xs text-gray-600 mb-1.5 font-mono">// Parcelas</label>
                   <select
                     value={installments}
                     onChange={(e) => setInstallments(Number(e.target.value))}
@@ -565,18 +571,18 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary w-full py-3.5 flex items-center justify-center gap-2 text-sm font-semibold"
+                className="btn-primary w-full py-3 flex items-center justify-center gap-2"
               >
                 {loading ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Processando...</>
+                  <><Loader2 className="w-4 h-4 animate-spin" /> PROCESSING...</>
                 ) : (
-                  <><Lock className="w-4 h-4" /> Pagar R${priceLabel}</>
+                  <><Lock className="w-4 h-4" /> &lt;PAY_R${priceLabel}/&gt;</>
                 )}
               </button>
 
-              <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
+              <div className="flex items-center justify-center gap-1.5 text-[10px] text-gray-700 font-mono">
                 <Lock className="w-3 h-3" />
-                Pagamento seguro e criptografado
+                // Pagamento seguro e criptografado
               </div>
             </form>
           )}
@@ -584,15 +590,15 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
           {/* ===== STEP 3B: PIX ===== */}
           {step === 'pix' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg text-sm">
-                <span className="text-gray-300">{planLabel}</span>
-                <span className="font-bold text-white">R${priceLabel}</span>
+              <div className="flex items-center justify-between p-3 border border-green-500/20 text-xs font-mono">
+                <span className="text-gray-500">{planLabel}</span>
+                <span className="font-bold text-green-400">R${priceLabel}</span>
               </div>
 
               {!pixQrCode ? (
                 <>
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1.5">E-mail do pagador</label>
+                    <label className="block text-xs text-gray-600 mb-1.5 font-mono">// E-mail do pagador</label>
                     <input
                       type="email"
                       required
@@ -604,7 +610,7 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
                   </div>
 
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1.5">CPF do pagador</label>
+                    <label className="block text-xs text-gray-600 mb-1.5 font-mono">// CPF do pagador</label>
                     <input
                       type="text"
                       required
@@ -620,12 +626,12 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
                   <button
                     onClick={handlePixGenerate}
                     disabled={loading || !email || cpf.replace(/\D/g, '').length !== 11}
-                    className="w-full py-3.5 flex items-center justify-center gap-2 text-sm font-semibold rounded-xl transition-all duration-200 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn-primary w-full py-3 flex items-center justify-center gap-2"
                   >
                     {loading ? (
-                      <><Loader2 className="w-4 h-4 animate-spin" /> Gerando PIX...</>
+                      <><Loader2 className="w-4 h-4 animate-spin" /> GENERATING...</>
                     ) : (
-                      <><QrCode className="w-4 h-4" /> Gerar QR Code PIX</>
+                      <><QrCode className="w-4 h-4" /> &lt;GENERATE_PIX/&gt;</>
                     )}
                   </button>
                 </>
@@ -633,7 +639,7 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
                 <>
                   {/* QR Code */}
                   <div className="flex flex-col items-center">
-                    <div className="bg-white p-4 rounded-2xl mb-4">
+                    <div className="bg-white p-4 mb-4">
                       <QRCodeSVG
                         value={pixQrCode}
                         size={200}
@@ -642,15 +648,15 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
                       />
                     </div>
 
-                    <div className="flex items-center gap-2 text-sm text-green-400 mb-2">
-                      <Clock className="w-4 h-4 animate-pulse" />
-                      Aguardando pagamento...
+                    <div className="flex items-center gap-2 text-xs text-green-400 mb-2 font-mono">
+                      <Clock className="w-3.5 h-3.5 animate-pulse" />
+                      AWAITING_PAYMENT...
                     </div>
                   </div>
 
                   {/* Copia e Cola */}
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1.5">Código PIX Copia e Cola</label>
+                    <label className="block text-xs text-gray-600 mb-1.5 font-mono">// PIX copia e cola</label>
                     <div className="relative">
                       <input
                         type="text"
@@ -660,40 +666,40 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
                       />
                       <button
                         onClick={copyPixCode}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-gray-700 transition-colors"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-green-500/10 transition-colors"
                         title="Copiar código"
                       >
                         {pixCopied ? (
                           <CheckCircle2 className="w-4 h-4 text-green-400" />
                         ) : (
-                          <Copy className="w-4 h-4 text-gray-400" />
+                          <Copy className="w-4 h-4 text-gray-600" />
                         )}
                       </button>
                     </div>
                     {pixCopied && (
-                      <p className="text-xs text-green-400 mt-1">Código copiado!</p>
+                      <p className="text-[10px] text-green-400 mt-1 font-mono">[COPIED]</p>
                     )}
                   </div>
 
                   {/* Instructions */}
-                  <div className="bg-gray-800 rounded-xl p-4 space-y-2">
-                    <p className="text-sm font-semibold text-gray-200">Como pagar:</p>
-                    <ol className="text-sm text-gray-400 space-y-1.5 list-decimal list-inside">
+                  <div className="border border-green-500/20 p-4 space-y-2 font-mono">
+                    <p className="text-xs font-semibold text-green-400">[INSTRUCTIONS]</p>
+                    <ol className="text-xs text-gray-600 space-y-1.5 list-decimal list-inside">
                       <li>Abra o app do seu banco</li>
                       <li>Escolha pagar via PIX</li>
                       <li>Escaneie o QR Code ou cole o código</li>
                       <li>Confirme o pagamento</li>
                     </ol>
-                    <p className="text-xs text-gray-500 pt-1">
-                      O pagamento será confirmado automaticamente em segundos.
+                    <p className="text-[10px] text-gray-700 pt-1">
+                      // Confirmação automática em segundos
                     </p>
                   </div>
                 </>
               )}
 
-              <div className="flex items-center justify-center gap-1.5 text-xs text-gray-500">
+              <div className="flex items-center justify-center gap-1.5 text-[10px] text-gray-700 font-mono">
                 <Lock className="w-3 h-3" />
-                Pagamento seguro via Mercado Pago
+                // Pagamento seguro via Mercado Pago
               </div>
             </div>
           )}

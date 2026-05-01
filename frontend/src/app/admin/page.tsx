@@ -78,14 +78,14 @@ const SEVERITY_COLORS: Record<string, string> = {
   CRITICAL: 'text-red-400',
   HIGH: 'text-orange-400',
   MEDIUM: 'text-yellow-400',
-  LOW: 'text-blue-400',
+  LOW: 'text-cyan-400',
   INFO: 'text-gray-400',
 };
 
 const STATUS_COLORS: Record<string, string> = {
   COMPLETED: 'text-green-400',
   RUNNING: 'text-yellow-400',
-  QUEUED: 'text-blue-400',
+  QUEUED: 'text-cyan-400',
   FAILED: 'text-red-400',
   PENDING: 'text-gray-400',
 };
@@ -176,41 +176,41 @@ export default function AdminPage() {
 
   if (loginMode) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-black flex items-center justify-center px-4">
         <div className="w-full max-w-sm">
           <div className="flex items-center justify-center gap-2 mb-8">
-            <Shield className="w-8 h-8 text-blue-500" />
-            <span className="text-xl font-bold">DevGuard Admin</span>
+            <Shield className="w-6 h-6 text-green-500" />
+            <span className="text-sm font-bold font-mono text-green-400">ADMIN_TERMINAL</span>
           </div>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4 border border-green-500/20 p-6">
             <div>
-              <label className="text-sm text-gray-400">Email</label>
+              <label className="text-xs text-gray-600 font-mono">// email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full mt-1 px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:border-blue-500 focus:outline-none"
+                className="input-field mt-1"
                 required
               />
             </div>
             <div>
-              <label className="text-sm text-gray-400">Senha</label>
+              <label className="text-xs text-gray-600 font-mono">// password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full mt-1 px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:border-blue-500 focus:outline-none"
+                className="input-field mt-1"
                 required
               />
             </div>
-            {loginError && <p className="text-red-400 text-sm">{loginError}</p>}
+            {loginError && <p className="text-red-400 text-xs font-mono">{loginError}</p>}
             <button
               type="submit"
               disabled={loginLoading}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="btn-primary w-full flex items-center justify-center gap-2"
             >
               {loginLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-              Entrar
+              [LOGIN]
             </button>
           </form>
         </div>
@@ -220,20 +220,23 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="flex items-center gap-3 text-green-500 font-mono text-sm">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span>LOADING_ADMIN<span className="animate-pulse">_</span></span>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center gap-4">
-        <Shield className="w-12 h-12 text-red-500" />
-        <p className="text-red-400 text-lg font-semibold">Acesso negado</p>
-        <p className="text-gray-500 text-sm">{error}</p>
-        <button onClick={handleLogout} className="text-blue-400 hover:underline text-sm">
-          Sair e tentar com outra conta
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4">
+        <Shield className="w-10 h-10 text-red-500/50" />
+        <p className="text-red-400 text-sm font-mono font-bold">[ACCESS_DENIED]</p>
+        <p className="text-gray-600 text-xs font-mono">{error}</p>
+        <button onClick={handleLogout} className="text-green-400 hover:text-green-300 text-xs font-mono">
+          [LOGOUT_&amp;_RETRY]
         </button>
       </div>
     );
@@ -250,39 +253,39 @@ export default function AdminPage() {
     { id: 'support' as const, label: 'Suporte', icon: MessageCircle },
   ];
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen bg-black">
       {/* Header */}
-      <nav className="border-b border-gray-800 px-4 sm:px-6 py-4">
+      <nav className="border-b border-green-500/20 px-4 sm:px-6 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Shield className="w-6 h-6 text-blue-500" />
-            <span className="font-bold">DevGuard Admin</span>
+            <Shield className="w-5 h-5 text-green-500" />
+            <span className="font-bold text-sm font-mono text-green-400">ADMIN_PANEL</span>
           </div>
           <div className="flex items-center gap-4">
-            <button onClick={fetchAll} className="text-gray-400 hover:text-white text-sm flex items-center gap-1">
-              <Activity className="w-4 h-4" /> Atualizar
+            <button onClick={fetchAll} className="text-gray-600 hover:text-green-400 text-xs font-mono flex items-center gap-1">
+              <Activity className="w-3.5 h-3.5" /> [REFRESH]
             </button>
-            <button onClick={handleLogout} className="text-gray-400 hover:text-red-400 text-sm flex items-center gap-1">
-              <LogOut className="w-4 h-4" /> Sair
+            <button onClick={handleLogout} className="text-gray-600 hover:text-red-400 text-xs font-mono flex items-center gap-1">
+              <LogOut className="w-3.5 h-3.5" /> [LOGOUT]
             </button>
           </div>
         </div>
       </nav>
 
       {/* Tabs */}
-      <div className="border-b border-gray-800 px-4 sm:px-6 overflow-x-auto">
+      <div className="border-b border-green-500/10 px-4 sm:px-6 overflow-x-auto">
         <div className="max-w-7xl mx-auto flex gap-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-mono border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'border-blue-500 text-blue-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-300'
+                  ? 'border-green-500 text-green-400'
+                  : 'border-transparent text-gray-600 hover:text-gray-400'
               }`}
             >
-              <tab.icon className="w-4 h-4" />
+              <tab.icon className="w-3.5 h-3.5" />
               {tab.label}
             </button>
           ))}
@@ -295,25 +298,25 @@ export default function AdminPage() {
           <div className="space-y-6">
             {/* KPI Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card icon={Users} label="Usuários" value={stats.users.total} sub={`+${stats.users.today} hoje`} color="blue" />
+              <Card icon={Users} label="Usuários" value={stats.users.total} sub={`+${stats.users.today} hoje`} color="green" />
               <Card icon={Scan} label="Scans" value={stats.scans.total} sub={`+${stats.scans.today} hoje`} color="green" />
               <Card icon={AlertTriangle} label="Vulnerabilidades" value={stats.vulnerabilities.total} sub="identificadas" color="yellow" />
-              <Card icon={DollarSign} label="Receita Total" value={formatBRL(stats.revenue.totalCents)} sub={`${stats.revenue.totalPayments} pagamentos`} color="emerald" />
+              <Card icon={DollarSign} label="Receita Total" value={formatBRL(stats.revenue.totalCents)} sub={`${stats.revenue.totalPayments} pagamentos`} color="green" />
             </div>
             {/* Revenue details */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                <p className="text-gray-500 text-sm mb-1">Scan Avulso</p>
-                <p className="text-xl font-bold text-white">{formatBRL(stats.revenue.singleScanCents)}</p>
+              <div className="bg-black border border-green-500/20 p-5">
+                <p className="text-gray-600 text-xs font-mono mb-1">// Scan Avulso</p>
+                <p className="text-lg font-bold text-white font-mono">{formatBRL(stats.revenue.singleScanCents)}</p>
               </div>
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                <p className="text-gray-500 text-sm mb-1">Assinaturas</p>
-                <p className="text-xl font-bold text-white">{formatBRL(stats.revenue.subscriptionCents)}</p>
-                <p className="text-xs text-green-400 mt-1">{stats.revenue.activeSubscriptions} ativas</p>
+              <div className="bg-black border border-green-500/20 p-5">
+                <p className="text-gray-600 text-xs font-mono mb-1">// Assinaturas</p>
+                <p className="text-lg font-bold text-white font-mono">{formatBRL(stats.revenue.subscriptionCents)}</p>
+                <p className="text-[10px] text-green-400 mt-1 font-mono">{stats.revenue.activeSubscriptions} ativas</p>
               </div>
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                <p className="text-gray-500 text-sm mb-1">Receita este mês</p>
-                <p className="text-xl font-bold text-white">{formatBRL(stats.revenue.thisMonthCents)}</p>
+              <div className="bg-black border border-green-500/20 p-5">
+                <p className="text-gray-600 text-xs font-mono mb-1">// Receita este mês</p>
+                <p className="text-lg font-bold text-white font-mono">{formatBRL(stats.revenue.thisMonthCents)}</p>
                 {stats.revenue.lastMonthCents > 0 && (
                   <p className={`text-xs mt-1 ${stats.revenue.thisMonthCents >= stats.revenue.lastMonthCents ? 'text-green-400' : 'text-red-400'}`}>
                     {stats.revenue.thisMonthCents >= stats.revenue.lastMonthCents ? '↑' : '↓'}{' '}
@@ -324,9 +327,9 @@ export default function AdminPage() {
             </div>
             {/* Severity & Status */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-yellow-400" /> Vulnerabilidades por Severidade
+              <div className="bg-black border border-green-500/20 p-5">
+                <h3 className="text-xs font-mono font-bold mb-3 flex items-center gap-2 text-green-400">
+                  <AlertTriangle className="w-3.5 h-3.5 text-yellow-400" /> [SEVERITY_BREAKDOWN]
                 </h3>
                 <div className="space-y-2">
                   {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO'].map((sev) => {
@@ -334,19 +337,19 @@ export default function AdminPage() {
                     const pct = stats.vulnerabilities.total > 0 ? (count / stats.vulnerabilities.total) * 100 : 0;
                     return (
                       <div key={sev} className="flex items-center gap-3">
-                        <span className={`text-xs font-bold w-16 ${SEVERITY_COLORS[sev]}`}>{sev}</span>
-                        <div className="flex-1 bg-gray-800 rounded-full h-2">
-                          <div className={`h-2 rounded-full ${sev === 'CRITICAL' ? 'bg-red-500' : sev === 'HIGH' ? 'bg-orange-500' : sev === 'MEDIUM' ? 'bg-yellow-500' : sev === 'LOW' ? 'bg-blue-500' : 'bg-gray-500'}`} style={{ width: `${pct}%` }} />
+                        <span className={`text-[10px] font-mono font-bold w-16 ${SEVERITY_COLORS[sev]}`}>{sev}</span>
+                        <div className="flex-1 bg-gray-900 h-1.5">
+                          <div className={`h-1.5 ${sev === 'CRITICAL' ? 'bg-red-500' : sev === 'HIGH' ? 'bg-orange-500' : sev === 'MEDIUM' ? 'bg-yellow-500' : sev === 'LOW' ? 'bg-cyan-500' : 'bg-gray-600'}`} style={{ width: `${pct}%` }} />
                         </div>
-                        <span className="text-sm text-gray-400 w-10 text-right">{count}</span>
+                        <span className="text-xs text-gray-500 w-10 text-right font-mono">{count}</span>
                       </div>
                     );
                   })}
                 </div>
               </div>
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-blue-400" /> Scans por Status
+              <div className="bg-black border border-green-500/20 p-5">
+                <h3 className="text-xs font-mono font-bold mb-3 flex items-center gap-2 text-green-400">
+                  <Activity className="w-3.5 h-3.5" /> [SCAN_STATUS]
                 </h3>
                 <div className="space-y-2">
                   {['COMPLETED', 'RUNNING', 'QUEUED', 'FAILED', 'PENDING'].map((status) => {
@@ -363,9 +366,9 @@ export default function AdminPage() {
             </div>
             {/* Quick analytics */}
             {analytics && (
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-purple-400" /> Tráfego (últimos {analyticsDays} dias)
+              <div className="bg-black border border-green-500/20 p-5">
+                <h3 className="text-xs font-mono font-bold mb-3 flex items-center gap-2 text-green-400">
+                  <Globe className="w-3.5 h-3.5" /> [TRAFFIC] // últimos {analyticsDays} dias
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   <div>
@@ -389,9 +392,9 @@ export default function AdminPage() {
         {/* USERS TAB */}
         {activeTab === 'users' && (
           <div className="space-y-4">
-            <h2 className="text-lg font-bold flex items-center gap-2">
-              <Users className="w-5 h-5 text-blue-400" />
-              Usuários Recentes ({stats.users.total} total)
+            <h2 className="text-sm font-mono font-bold flex items-center gap-2 text-green-400">
+              <Users className="w-4 h-4" />
+              [USERS] // {stats.users.total} total
             </h2>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -431,9 +434,9 @@ export default function AdminPage() {
         {/* SCANS TAB */}
         {activeTab === 'scans' && (
           <div className="space-y-4">
-            <h2 className="text-lg font-bold flex items-center gap-2">
-              <Scan className="w-5 h-5 text-green-400" />
-              Scans Recentes ({stats.scans.total} total)
+            <h2 className="text-sm font-mono font-bold flex items-center gap-2 text-green-400">
+              <Scan className="w-4 h-4" />
+              [SCANS] // {stats.scans.total} total
             </h2>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -475,9 +478,9 @@ export default function AdminPage() {
         {/* PAYMENTS TAB */}
         {activeTab === 'payments' && (
           <div className="space-y-4">
-            <h2 className="text-lg font-bold flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-emerald-400" />
-              Pagamentos Recentes
+            <h2 className="text-sm font-mono font-bold flex items-center gap-2 text-green-400">
+              <CreditCard className="w-4 h-4" />
+              [PAYMENTS]
             </h2>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -495,8 +498,8 @@ export default function AdminPage() {
                     <tr key={p.id} className="border-b border-gray-800/50 hover:bg-gray-900/50">
                       <td className="py-3 px-3 text-white text-xs">{p.user.email}</td>
                       <td className="py-3 px-3 text-center">
-                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                          p.type === 'SUBSCRIPTION' ? 'bg-purple-900 text-purple-300' : 'bg-blue-900 text-blue-300'
+                        <span className={`text-[10px] font-mono font-bold px-2 py-0.5 ${
+                          p.type === 'SUBSCRIPTION' ? 'bg-green-500/10 text-green-400 border border-green-500/30' : 'bg-gray-900 text-gray-400 border border-gray-700'
                         }`}>
                           {p.type === 'SUBSCRIPTION' ? 'Assinatura' : 'Avulso'}
                         </span>
@@ -522,17 +525,17 @@ export default function AdminPage() {
         {activeTab === 'analytics' && analytics && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold flex items-center gap-2">
-                <Eye className="w-5 h-5 text-purple-400" />
-                Tráfego do Site
+              <h2 className="text-sm font-mono font-bold flex items-center gap-2 text-green-400">
+                <Eye className="w-4 h-4" />
+                [SITE_TRAFFIC]
               </h2>
               <div className="flex gap-2">
                 {[7, 14, 30].map((d) => (
                   <button
                     key={d}
                     onClick={() => setAnalyticsDays(d)}
-                    className={`px-3 py-1.5 text-xs rounded-lg ${
-                      analyticsDays === d ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'
+                    className={`px-3 py-1.5 text-xs font-mono ${
+                      analyticsDays === d ? 'bg-green-600/20 text-green-400 border border-green-500/50' : 'border border-green-500/20 text-gray-600 hover:text-green-400'
                     }`}
                   >
                     {d}d
@@ -543,23 +546,23 @@ export default function AdminPage() {
 
             {/* KPIs */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                <Eye className="w-5 h-5 text-purple-400 mb-2" />
-                <p className="text-2xl font-bold">{analytics.totalViews}</p>
-                <p className="text-gray-500 text-sm">Page views</p>
+              <div className="bg-black border border-green-500/20 p-5">
+                <Eye className="w-4 h-4 text-green-500 mb-2" />
+                <p className="text-xl font-bold font-mono">{analytics.totalViews}</p>
+                <p className="text-gray-600 text-xs font-mono">page_views</p>
               </div>
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                <Users className="w-5 h-5 text-blue-400 mb-2" />
-                <p className="text-2xl font-bold">{analytics.uniqueSessions}</p>
-                <p className="text-gray-500 text-sm">Sessões únicas</p>
+              <div className="bg-black border border-green-500/20 p-5">
+                <Users className="w-4 h-4 text-green-500 mb-2" />
+                <p className="text-xl font-bold font-mono">{analytics.uniqueSessions}</p>
+                <p className="text-gray-600 text-xs font-mono">unique_sessions</p>
               </div>
             </div>
 
             {/* Daily chart (simple bar) */}
             {analytics.dailyViews.length > 0 && (
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                <h3 className="font-semibold mb-4 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-green-400" /> Views por Dia
+              <div className="bg-black border border-green-500/20 p-5">
+                <h3 className="text-xs font-mono font-bold mb-4 flex items-center gap-2 text-green-400">
+                  <TrendingUp className="w-3.5 h-3.5" /> [DAILY_VIEWS]
                 </h3>
                 <div className="flex items-end gap-1 h-32">
                   {analytics.dailyViews.map((d, i) => {
@@ -567,9 +570,9 @@ export default function AdminPage() {
                     const height = (d.views / max) * 100;
                     return (
                       <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                        <span className="text-xs text-gray-500">{d.views}</span>
+                        <span className="text-[10px] text-gray-600 font-mono">{d.views}</span>
                         <div
-                          className="w-full bg-blue-500 rounded-t min-h-[2px]"
+                          className="w-full bg-green-500 min-h-[2px]"
                           style={{ height: `${height}%` }}
                         />
                         <span className="text-[10px] text-gray-600">
@@ -583,9 +586,9 @@ export default function AdminPage() {
             )}
 
             {/* Top pages */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <Globe className="w-4 h-4 text-purple-400" /> Páginas Mais Visitadas
+            <div className="bg-black border border-green-500/20 p-5">
+              <h3 className="text-xs font-mono font-bold mb-3 flex items-center gap-2 text-green-400">
+                <Globe className="w-3.5 h-3.5" /> [TOP_PAGES]
               </h3>
               <div className="space-y-2">
                 {analytics.topPages.map((p, i) => (
@@ -623,11 +626,11 @@ function Card({ icon: Icon, label, value, sub, color }: {
   };
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-5">
-      <Icon className={`w-5 h-5 ${colorMap[color] || 'text-gray-400'} mb-2`} />
-      <p className="text-lg sm:text-2xl font-bold text-white">{value}</p>
-      <p className="text-gray-500 text-xs sm:text-sm">{label}</p>
-      <p className={`text-xs mt-1 ${colorMap[color] || 'text-gray-500'}`}>{sub}</p>
+    <div className="bg-black border border-green-500/20 p-4 sm:p-5">
+      <Icon className={`w-4 h-4 ${colorMap[color] || 'text-gray-600'} mb-2`} />
+      <p className="text-lg sm:text-xl font-bold text-white font-mono">{value}</p>
+      <p className="text-gray-600 text-xs font-mono">{label}</p>
+      <p className={`text-[10px] mt-1 font-mono ${colorMap[color] || 'text-gray-600'}`}>{sub}</p>
     </div>
   );
 }

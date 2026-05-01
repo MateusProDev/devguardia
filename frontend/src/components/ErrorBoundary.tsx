@@ -29,11 +29,11 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-gray-900 rounded-lg p-8 text-center">
-            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="min-h-screen bg-black flex items-center justify-center p-4">
+          <div className="max-w-md w-full border border-red-500/30 bg-black p-8 text-center">
+            <div className="w-14 h-14 bg-red-500/10 border border-red-500/30 flex items-center justify-center mx-auto mb-4">
               <svg
-                className="w-8 h-8 text-red-500"
+                className="w-7 h-7 text-red-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -46,24 +46,24 @@ export class ErrorBoundary extends Component<Props, State> {
                 />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-white mb-2">
-              Algo deu errado
+            <h2 className="text-sm font-mono font-bold text-red-400 mb-2">
+              [FATAL_ERROR]
             </h2>
-            <p className="text-gray-400 mb-6">
-              Ocorreu um erro inesperado. Por favor, tente recarregar a página.
+            <p className="text-gray-600 text-xs font-mono mb-6">
+              // Ocorreu um erro inesperado. Recarregue a página.
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+              className="btn-primary"
             >
-              Recarregar página
+              [RELOAD]
             </button>
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <details className="mt-4 text-left">
-                <summary className="text-gray-500 text-sm cursor-pointer hover:text-gray-400">
-                  Detalhes do erro (dev only)
+                <summary className="text-gray-600 text-xs cursor-pointer hover:text-green-400 font-mono">
+                  // debug_info
                 </summary>
-                <pre className="mt-2 text-xs text-red-400 bg-gray-800 p-3 rounded overflow-auto">
+                <pre className="mt-2 text-xs text-red-400/80 border border-red-500/20 bg-black p-3 overflow-auto font-mono">
                   {this.state.error.toString()}
                 </pre>
               </details>
