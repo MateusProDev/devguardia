@@ -6,6 +6,7 @@ RUN npm ci
 COPY prisma ./prisma
 RUN npx prisma generate
 COPY . .
+RUN rm -rf dist
 RUN npm run build
 
 FROM node:20-slim AS runner
