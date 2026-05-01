@@ -10,7 +10,7 @@ interface VulnRaw {
   solution: string;
 }
 
-const ALLOWED_FLAGS = ['-sT', '--open', '-T4', '--host-timeout', '10s', '--max-retries', '1', '-p', '21,22,80,443,3306,5432,6379,8080,8443,27017'];
+const ALLOWED_FLAGS = ['--unprivileged', '-sT', '--open', '-T4', '--host-timeout', '10s', '--max-retries', '1', '-p', '21,22,80,443,3306,5432,6379,8080,8443,27017'];
 
 export class NmapService {
   async scan(hostname: string): Promise<VulnRaw[]> {

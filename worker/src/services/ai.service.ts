@@ -107,7 +107,26 @@ Responda APENAS com JSON válido (sem markdown, sem texto antes ou depois):
         };
       }
 
-      const content = JSON.parse(jsonMatch[0]);
+      // Sanitize bad escape sequences from AI output
+      const sanitized = jsonMatch[0]
+        .replace(/\\(?!["\\/bfnrtu])/g, '\\\\')  // fix invalid escapes
+        .replace(/[\x00-\x1f]/g, (ch) => {        // escape control chars
+          if (ch === '\n') return '\\n';
+          if (ch === '\r') return '\\r';
+          if (ch === '\t') return '\\t';
+          return '';
+        });
+
+      let content: any;
+      try {
+        content = JSON.parse(sanitized);
+      } catch {
+        console.warn(`[AI] JSON parse failed after sanitization for "${vuln.title}" — using fallback`);
+        return {
+          explanation: this.getFallbackExplanation(vuln),
+          codeFix: this.getFallbackCodeFix(vuln),
+        };
+      }
 
       const explanation = content.explanation && content.explanation !== vuln.description
         ? content.explanation
