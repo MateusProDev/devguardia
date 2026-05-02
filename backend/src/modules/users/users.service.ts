@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { PLAN_LIMITS, PlanName } from '../../common/config/limits.config';
 
 interface FindOrCreateDto {
   firebaseUid: string;
@@ -78,10 +79,34 @@ export class UsersService {
     const sub = await this.prisma.subscription.findUnique({
       where: { userId },
     });
-    if (!sub) return { active: false };
+    if (!sub) return { active: false, plan: 'FREE' as const };
+    const active = sub.active && sub.expiresAt > new Date();
     return {
-      active: sub.active && sub.expiresAt > new Date(),
+      active,
+      plan: active ? (sub.plan as PlanName) : ('FREE' as const),
       expiresAt: sub.expiresAt,
     };
+  }
+
+  async getActivePlan(userId: string): Promise<PlanName> {
+    const sub = await this.getSubscription(userId);
+    return sub.active ? (sub.plan as PlanName) : 'FREE';
+  }
+
+  async getPlanLimits(userId: string) {
+    const plan = await this.getActivePlan(userId);
+    return { plan, limits: PLAN_LIMITS[plan] || PLAN_LIMITS.FREE };
+  }
+
+  async getScansThisMonth(userId: string): Promise<number> {
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    return this.prisma.scan.count({
+      where: {
+        userId,
+        createdAt: { gte: startOfMonth },
+      },
+    });
   }
 }

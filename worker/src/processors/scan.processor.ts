@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { NmapService } from '../services/nmap.service';
+import { NmapService, ScanMode } from '../services/nmap.service';
 import { HttpAnalyzerService } from '../services/http.service';
 import { AiWorkerService } from '../services/ai.service';
 import { calculateScore } from '../utils/score-calculator';
@@ -9,7 +9,7 @@ const httpService = new HttpAnalyzerService();
 const aiService = new AiWorkerService();
 const processingScans = new Set<string>();
 
-export async function scanProcessor(scanId: string, url: string, userId: string, prisma: PrismaClient) {
+export async function scanProcessor(scanId: string, url: string, userId: string, prisma: PrismaClient, intensity: ScanMode = 'BASIC') {
   const startTime = Date.now();
 
   // Prevenir processamento duplicado do mesmo scan
@@ -48,8 +48,10 @@ export async function scanProcessor(scanId: string, url: string, userId: string,
     const nmapStart = Date.now();
     const httpStart = Date.now();
 
+    console.log(`[SCAN ${scanId}] Intensity: ${intensity}`);
+
     const [nmapVulns, httpVulns] = await Promise.all([
-      nmapService.scan(hostname).then((r) => {
+      nmapService.scan(hostname, intensity).then((r) => {
         console.log(`[SCAN ${scanId}] Nmap finished in ${Date.now() - nmapStart}ms — found ${r.length} vulns: ${r.map((v) => v.title).join(', ') || 'none'}`);
         return r;
       }),

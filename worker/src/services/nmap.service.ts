@@ -10,23 +10,39 @@ interface VulnRaw {
   solution: string;
 }
 
-const ALLOWED_FLAGS = ['--unprivileged', '-sT', '--open', '-T4', '--host-timeout', '10s', '--max-retries', '1', '-p', '21,22,80,443,3306,5432,6379,8080,8443,27017'];
+export type ScanMode = 'BASIC' | 'AGGRESSIVE';
+
+const SCAN_PROFILES: Record<ScanMode, { flags: string[]; ports: string; timeout: number }> = {
+  BASIC: {
+    flags: ['--unprivileged', '-sT', '--open', '-T4', '--host-timeout', '10s', '--max-retries', '1'],
+    ports: '21,22,80,443,3306,5432,6379,8080,8443,27017',
+    timeout: 20000,
+  },
+  AGGRESSIVE: {
+    flags: ['--unprivileged', '-sT', '-sV', '--open', '-T4', '--host-timeout', '30s', '--max-retries', '2'],
+    ports: '1-1024,3306,5432,6379,8080,8443,9200,27017,11211',
+    timeout: 60000,
+  },
+};
 
 export class NmapService {
-  async scan(hostname: string): Promise<VulnRaw[]> {
+  async scan(hostname: string, mode: ScanMode = 'BASIC'): Promise<VulnRaw[]> {
     const sanitizedHost = this.sanitizeHostname(hostname);
     if (!sanitizedHost) {
       console.warn(`[NMAP] Invalid hostname rejected: ${hostname}`);
       return [];
     }
 
+    const profile = SCAN_PROFILES[mode] || SCAN_PROFILES.BASIC;
+    const nmapArgs = [...profile.flags, '-p', profile.ports];
+
     try {
-      console.log(`[NMAP] Starting scan for ${sanitizedHost} with flags: ${ALLOWED_FLAGS.join(' ')}`);
+      console.log(`[NMAP] Starting ${mode} scan for ${sanitizedHost} ports=${profile.ports}`);
       const { stdout, stderr } = await execFileAsync('nmap', [
-        ...ALLOWED_FLAGS,
+        ...nmapArgs,
         sanitizedHost,
         '-oX', '-',
-      ], { timeout: 20000 });
+      ], { timeout: profile.timeout });
 
       if (stderr) console.warn(`[NMAP] stderr: ${stderr}`);
       console.log(`[NMAP] Raw output length: ${stdout.length} bytes`);
@@ -85,6 +101,36 @@ export class NmapService {
         title: 'MongoDB exposto publicamente',
         severity: 'CRITICAL',
         solution: 'Configure autenticação no MongoDB. Restrinja acesso por firewall.',
+      },
+      '9200': {
+        title: 'Elasticsearch exposto publicamente',
+        severity: 'CRITICAL',
+        solution: 'Restrinja Elasticsearch a conexões internas. Use autenticação X-Pack.',
+      },
+      '11211': {
+        title: 'Memcached exposto publicamente',
+        severity: 'HIGH',
+        solution: 'Restrinja Memcached a localhost. Nunca exponha na internet.',
+      },
+      '23': {
+        title: 'Telnet porta aberta (inseguro)',
+        severity: 'CRITICAL',
+        solution: 'Desabilite Telnet imediatamente. Use SSH para acesso remoto.',
+      },
+      '3389': {
+        title: 'RDP (Remote Desktop) exposto',
+        severity: 'HIGH',
+        solution: 'Restrinja RDP por VPN ou firewall. Habilite NLA.',
+      },
+      '445': {
+        title: 'SMB exposto publicamente',
+        severity: 'HIGH',
+        solution: 'Bloqueie porta SMB (445) no firewall externo.',
+      },
+      '25': {
+        title: 'SMTP aberto (possível relay)',
+        severity: 'MEDIUM',
+        solution: 'Configure autenticação SMTP. Restrinja relay.',
       },
     };
 

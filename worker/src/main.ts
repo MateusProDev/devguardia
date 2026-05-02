@@ -7,6 +7,7 @@ interface ScanJobData {
   scanId: string;
   url: string;
   userId: string;
+  intensity?: 'BASIC' | 'AGGRESSIVE';
 }
 
 const prisma = new PrismaClient({
@@ -41,7 +42,7 @@ async function start() {
     console.log(`[WORKER] Processing job ${job.id}: scan-job`);
     try {
       const data = job.data as ScanJobData;
-      await scanProcessor(data.scanId, data.url, data.userId, prisma);
+      await scanProcessor(data.scanId, data.url, data.userId, prisma, data.intensity || 'BASIC');
       console.log(`[WORKER] Job ${job.id} completed`);
     } catch (err) {
       console.error(`[WORKER] Job ${job.id} failed:`, err);

@@ -120,8 +120,15 @@ export default function LandingPage() {
                 '@type': 'Offer',
                 price: '39.90',
                 priceCurrency: 'BRL',
-                name: 'Assinatura Pro',
-                description: 'Scans ilimitados com relatórios completos e prioridade na fila',
+                name: 'Starter',
+                description: '5 scans/dia com Nmap básico e explicações IA',
+              },
+              {
+                '@type': 'Offer',
+                price: '99.90',
+                priceCurrency: 'BRL',
+                name: 'Pro',
+                description: '30 scans/dia com varredura agressiva e fila prioritária',
               },
             ],
           }),
@@ -548,7 +555,7 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
           {plans.map((p) => (
             <div
               key={p.name}
@@ -781,18 +788,30 @@ const plans = [
     features: ['Relatório completo', 'Todas as vulnerabilidades', 'Correções com IA', 'Válido para 1 URL', 'Exportar PDF'],
   },
   {
-    name: 'Assinatura Pro',
+    name: 'Starter',
     price: 'R$39,90',
     period: '/mês',
-    highlight: true,
-    cta: 'Assinar agora',
+    highlight: false,
+    cta: 'Assinar Starter',
     features: [
-      'Scans ilimitados',
-      'Relatórios completos',
-      'Correções com IA',
-      'Histórico de scans',
-      'Prioridade na fila',
-      'Suporte prioritário',
+      '5 scans/dia (50/mês)',
+      'Nmap: 10 portas',
+      'Explicações com IA',
+      'Histórico 30 dias',
+    ],
+  },
+  {
+    name: 'Pro',
+    price: 'R$99,90',
+    period: '/mês',
+    highlight: true,
+    cta: 'Assinar Pro',
+    features: [
+      '30 scans/dia (300/mês)',
+      'Varredura agressiva',
+      'Detecção de serviços',
+      'Fila prioritária',
+      'Histórico 90 dias',
     ],
   },
 ];

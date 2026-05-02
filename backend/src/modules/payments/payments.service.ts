@@ -9,7 +9,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePaymentDto, PaymentType } from './dto/create-payment.dto';
 import { CreatePixPaymentDto } from './dto/create-pix-payment.dto';
 import * as crypto from 'crypto';
-import { PRICING, LIMITS } from '../../common/config/limits.config';
+import { PRICING, LIMITS, PLAN_LIMITS } from '../../common/config/limits.config';
 import { isValidCPF } from '../../common/utils/cpf-validator';
 
 const MERCADOPAGO_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
@@ -27,19 +27,56 @@ export class PaymentsService {
     return { publicKey: key };
   }
 
+  private getPriceForType(type: PaymentType): number {
+    switch (type) {
+      case PaymentType.SINGLE_SCAN: return PRICING.SINGLE_SCAN_PRICE;
+      case PaymentType.SUBSCRIPTION_STARTER: return PRICING.STARTER_PRICE;
+      case PaymentType.SUBSCRIPTION_PRO: return PRICING.PRO_PRICE;
+      case PaymentType.SUBSCRIPTION_ENTERPRISE: return PRICING.ENTERPRISE_PRICE;
+      default: throw new BadRequestException('Tipo de plano inválido.');
+    }
+  }
+
+  private getDescriptionForType(type: PaymentType): string {
+    switch (type) {
+      case PaymentType.SINGLE_SCAN: return 'DevGuard AI - Relatório Completo';
+      case PaymentType.SUBSCRIPTION_STARTER: return 'DevGuard AI - Plano Starter (Mensal)';
+      case PaymentType.SUBSCRIPTION_PRO: return 'DevGuard AI - Plano Pro (Mensal)';
+      case PaymentType.SUBSCRIPTION_ENTERPRISE: return 'DevGuard AI - Plano Enterprise (Mensal)';
+      default: return 'DevGuard AI - Pagamento';
+    }
+  }
+
+  private isSubscriptionType(type: PaymentType): boolean {
+    return [
+      PaymentType.SUBSCRIPTION_STARTER,
+      PaymentType.SUBSCRIPTION_PRO,
+      PaymentType.SUBSCRIPTION_ENTERPRISE,
+    ].includes(type);
+  }
+
+  private getPlanFromType(type: PaymentType): 'STARTER' | 'PRO' | 'ENTERPRISE' {
+    switch (type) {
+      case PaymentType.SUBSCRIPTION_STARTER: return 'STARTER';
+      case PaymentType.SUBSCRIPTION_PRO: return 'PRO';
+      case PaymentType.SUBSCRIPTION_ENTERPRISE: return 'ENTERPRISE';
+      default: throw new BadRequestException('Tipo não é assinatura.');
+    }
+  }
+
   async processCardPayment(userId: string, dto: CreatePaymentDto) {
-    const amount =
-      dto.type === PaymentType.SINGLE_SCAN ? PRICING.SINGLE_SCAN_PRICE : PRICING.SUBSCRIPTION_PRICE;
-    const description =
-      dto.type === PaymentType.SINGLE_SCAN
-        ? 'DevGuard AI - Relatório Completo'
-        : 'DevGuard AI - Assinatura Mensal';
+    const amount = this.getPriceForType(dto.type);
+    const description = this.getDescriptionForType(dto.type);
 
     if (dto.type === PaymentType.SINGLE_SCAN) {
       if (!dto.scanId) throw new BadRequestException('scanId é obrigatório para scan avulso.');
       const scan = await this.prisma.scan.findUnique({ where: { id: dto.scanId } });
       if (!scan) throw new NotFoundException('Scan não encontrado.');
       if (scan.userId !== userId) throw new ForbiddenException('Acesso negado.');
+    }
+
+    if (amount <= 0) {
+      throw new BadRequestException('Este plano requer contato comercial.');
     }
 
     const payment = await this.prisma.payment.create({
@@ -128,18 +165,18 @@ export class PaymentsService {
       throw new BadRequestException('CPF inválido');
     }
 
-    const amount =
-      dto.type === PaymentType.SINGLE_SCAN ? PRICING.SINGLE_SCAN_PRICE : PRICING.SUBSCRIPTION_PRICE;
-    const description =
-      dto.type === PaymentType.SINGLE_SCAN
-        ? 'DevGuard AI - Relatório Completo'
-        : 'DevGuard AI - Assinatura Mensal';
+    const amount = this.getPriceForType(dto.type);
+    const description = this.getDescriptionForType(dto.type);
 
     if (dto.type === PaymentType.SINGLE_SCAN) {
       if (!dto.scanId) throw new BadRequestException('scanId é obrigatório para scan avulso.');
       const scan = await this.prisma.scan.findUnique({ where: { id: dto.scanId } });
       if (!scan) throw new NotFoundException('Scan não encontrado.');
       if (scan.userId !== userId) throw new ForbiddenException('Acesso negado.');
+    }
+
+    if (amount <= 0) {
+      throw new BadRequestException('Este plano requer contato comercial.');
     }
 
     const payment = await this.prisma.payment.create({
@@ -432,39 +469,45 @@ export class PaymentsService {
         where: { id: payment.scanId },
         data: { isPremium: true },
       });
-    } else if (payment.type === 'SUBSCRIPTION') {
+    } else if (this.isSubscriptionType(payment.type as PaymentType)) {
+      const plan = this.getPlanFromType(payment.type as PaymentType);
+
       // Verificar se já existe assinatura para este usuário
       const existingSubscription = await this.prisma.subscription.findUnique({
         where: { userId: payment.userId },
       });
 
-      const now = new Date();
       const newExpiresAt = new Date();
       newExpiresAt.setDate(newExpiresAt.getDate() + PRICING.SUBSCRIPTION_DURATION_DAYS);
 
       if (existingSubscription && existingSubscription.active) {
-        // Renovação automática: estender a partir da data atual de expiração
-        const currentExpiresAt = existingSubscription.expiresAt;
-        const extendedExpiresAt = new Date(currentExpiresAt);
+        // Renovação ou upgrade
+        const isUpgrade = this.planRank(plan) > this.planRank(existingSubscription.plan as any);
+        const extendedExpiresAt = new Date(isUpgrade ? new Date() : existingSubscription.expiresAt);
         extendedExpiresAt.setDate(extendedExpiresAt.getDate() + PRICING.SUBSCRIPTION_DURATION_DAYS);
 
         await this.prisma.subscription.update({
           where: { userId: payment.userId },
-          data: { expiresAt: extendedExpiresAt },
+          data: { plan, expiresAt: extendedExpiresAt },
         });
 
-        this.logger.log(`Subscription renewed for user ${payment.userId} until ${extendedExpiresAt.toISOString()}`);
+        this.logger.log(`Subscription ${isUpgrade ? 'upgraded' : 'renewed'} for user ${payment.userId} to ${plan} until ${extendedExpiresAt.toISOString()}`);
       } else {
         // Nova assinatura ou reativação
         await this.prisma.subscription.upsert({
           where: { userId: payment.userId },
-          update: { active: true, expiresAt: newExpiresAt },
-          create: { userId: payment.userId, active: true, expiresAt: newExpiresAt },
+          update: { active: true, plan, expiresAt: newExpiresAt },
+          create: { userId: payment.userId, active: true, plan, expiresAt: newExpiresAt },
         });
 
-        this.logger.log(`Subscription activated for user ${payment.userId} until ${newExpiresAt.toISOString()}`);
+        this.logger.log(`Subscription activated for user ${payment.userId} plan ${plan} until ${newExpiresAt.toISOString()}`);
       }
     }
+  }
+
+  private planRank(plan: 'STARTER' | 'PRO' | 'ENTERPRISE'): number {
+    const ranks = { STARTER: 1, PRO: 2, ENTERPRISE: 3 };
+    return ranks[plan] || 0;
   }
 
   private getErrorMessage(mpResponse: any): string {

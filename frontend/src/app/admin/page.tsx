@@ -499,9 +499,9 @@ export default function AdminPage() {
                       <td className="py-3 px-3 text-white text-xs">{p.user.email}</td>
                       <td className="py-3 px-3 text-center">
                         <span className={`text-[10px] font-mono font-bold px-2 py-0.5 ${
-                          p.type === 'SUBSCRIPTION' ? 'bg-green-500/10 text-green-400 border border-green-500/30' : 'bg-gray-900 text-gray-400 border border-gray-700'
+                          p.type.startsWith('SUBSCRIPTION') ? 'bg-green-500/10 text-green-400 border border-green-500/30' : 'bg-gray-900 text-gray-400 border border-gray-700'
                         }`}>
-                          {p.type === 'SUBSCRIPTION' ? 'Assinatura' : 'Avulso'}
+                          {p.type === 'SINGLE_SCAN' ? 'Avulso' : p.type === 'SUBSCRIPTION_STARTER' ? 'Starter' : p.type === 'SUBSCRIPTION_PRO' ? 'Pro' : p.type === 'SUBSCRIPTION_ENTERPRISE' ? 'Enterprise' : p.type}
                         </span>
                       </td>
                       <td className="py-3 px-3 text-center font-semibold text-white">{formatBRL(p.amount)}</td>

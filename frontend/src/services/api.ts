@@ -40,7 +40,7 @@ export const api = {
   getPaymentPublicKey: () => authFetch('/payment/public-key'),
 
   processPayment: (data: {
-    type: 'SINGLE_SCAN' | 'SUBSCRIPTION';
+    type: 'SINGLE_SCAN' | 'SUBSCRIPTION_STARTER' | 'SUBSCRIPTION_PRO' | 'SUBSCRIPTION_ENTERPRISE';
     scanId?: string;
     token: string;
     paymentMethodId: string;
@@ -57,7 +57,7 @@ export const api = {
     authFetch(`/payment/installments?amount=${amount}&bin=${bin}`),
 
   processPixPayment: (data: {
-    type: 'SINGLE_SCAN' | 'SUBSCRIPTION';
+    type: 'SINGLE_SCAN' | 'SUBSCRIPTION_STARTER' | 'SUBSCRIPTION_PRO' | 'SUBSCRIPTION_ENTERPRISE';
     scanId?: string;
     email: string;
     cpf: string;

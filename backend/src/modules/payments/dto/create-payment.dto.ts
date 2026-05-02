@@ -2,7 +2,9 @@ import { IsEnum, IsOptional, IsString, IsNumber, IsNotEmpty, Min, Max } from 'cl
 
 export enum PaymentType {
   SINGLE_SCAN = 'SINGLE_SCAN',
-  SUBSCRIPTION = 'SUBSCRIPTION',
+  SUBSCRIPTION_STARTER = 'SUBSCRIPTION_STARTER',
+  SUBSCRIPTION_PRO = 'SUBSCRIPTION_PRO',
+  SUBSCRIPTION_ENTERPRISE = 'SUBSCRIPTION_ENTERPRISE',
 }
 
 export class CreatePaymentDto {

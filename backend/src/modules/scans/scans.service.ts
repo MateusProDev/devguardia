@@ -10,11 +10,10 @@ import { QueueService } from '../queue/queue.service';
 import { CreateScanDto } from './dto/create-scan.dto';
 import { isPrivateIP } from '../../common/utils/ip-validator';
 import { isValidScanUrl } from '../../common/utils/url-validator';
-import { LIMITS } from '../../common/config/limits.config';
+import { LIMITS, PLAN_LIMITS } from '../../common/config/limits.config';
 
 @Injectable()
 export class ScansService {
-  private readonly FREE_DAILY_LIMIT = LIMITS.FREE_DAILY_SCAN_LIMIT;
   private readonly FREE_VULN_LIMIT = LIMITS.FREE_VULNERABILITY_LIMIT;
   private readonly SCAN_DEDUP_WINDOW_MS = LIMITS.SCAN_DEDUP_WINDOW_MS;
 
@@ -73,15 +72,40 @@ export class ScansService {
       throw new BadRequestException('Já existe um scan em andamento para este URL. Aguarde a conclusão.');
     }
 
-    const hasSub = await this.usersService.hasActiveSubscription(userId);
-    if (!hasSub) {
-      const scansToday = await this.usersService.getScansToday(userId);
-      if (scansToday >= this.FREE_DAILY_LIMIT) {
+    const { plan, limits } = await this.usersService.getPlanLimits(userId);
+
+    // Check daily scan limit
+    const scansToday = await this.usersService.getScansToday(userId);
+    if ('dailyScans' in limits && scansToday >= limits.dailyScans) {
+      throw new ForbiddenException(
+        `Limite diário de ${limits.dailyScans} scan(s) atingido para o plano ${plan}. Faça upgrade para mais scans.`,
+      );
+    }
+
+    // Check monthly scan limit
+    if ('monthlyScans' in limits) {
+      const scansMonth = await this.usersService.getScansThisMonth(userId);
+      if (scansMonth >= limits.monthlyScans) {
         throw new ForbiddenException(
-          'Limite diário de scans gratuitos atingido. Assine para scans ilimitados.',
+          `Limite mensal de ${limits.monthlyScans} scans atingido para o plano ${plan}. Faça upgrade para mais scans.`,
         );
       }
     }
+
+    // Check concurrent scan limit
+    if ('concurrentScans' in limits) {
+      const running = await this.prisma.scan.count({
+        where: { userId, status: { in: ['QUEUED', 'RUNNING'] } },
+      });
+      if (running >= limits.concurrentScans) {
+        throw new ForbiddenException(
+          'Você já possui scans em andamento. Aguarde a conclusão.',
+        );
+      }
+    }
+
+    const hasSub = plan !== 'FREE';
+    const intensity = 'intensity' in limits ? limits.intensity : 'BASIC';
 
     const scan = await this.prisma.scan.create({
       data: {
@@ -89,6 +113,7 @@ export class ScansService {
         url,
         status: 'QUEUED',
         isPremium: hasSub,
+        intensity: intensity as any,
       },
     });
 
@@ -103,7 +128,7 @@ export class ScansService {
       },
     });
 
-    await this.queueService.addScanJob(scan.id, url, userId);
+    await this.queueService.addScanJob(scan.id, url, userId, intensity);
 
     return scan;
   }

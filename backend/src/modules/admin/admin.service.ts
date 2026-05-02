@@ -39,7 +39,7 @@ export class AdminService {
       this.prisma.payment.count({ where: { status: 'APPROVED' } }),
       this.prisma.payment.aggregate({ where: { status: 'APPROVED' }, _sum: { amount: true } }),
       this.prisma.payment.aggregate({ where: { status: 'APPROVED', type: 'SINGLE_SCAN' }, _sum: { amount: true } }),
-      this.prisma.payment.aggregate({ where: { status: 'APPROVED', type: 'SUBSCRIPTION' }, _sum: { amount: true } }),
+      this.prisma.payment.aggregate({ where: { status: 'APPROVED', type: { in: ['SUBSCRIPTION_STARTER', 'SUBSCRIPTION_PRO', 'SUBSCRIPTION_ENTERPRISE'] } }, _sum: { amount: true } }),
       this.prisma.payment.aggregate({ where: { status: 'APPROVED', createdAt: { gte: startOfMonth } }, _sum: { amount: true } }),
       this.prisma.payment.aggregate({ where: { status: 'APPROVED', createdAt: { gte: startOfLastMonth, lt: startOfMonth } }, _sum: { amount: true } }),
       this.prisma.subscription.count({ where: { active: true, expiresAt: { gt: now } } }),

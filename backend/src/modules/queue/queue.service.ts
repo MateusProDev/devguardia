@@ -40,11 +40,11 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async addScanJob(scanId: string, url: string, userId: string) {
+  async addScanJob(scanId: string, url: string, userId: string, intensity: string = 'BASIC') {
     // Wake up worker before adding job (Render free tier sleeps after 15min)
     await this.wakeWorker();
 
-    await this.boss.send('scan-job', { scanId, url, userId }, {
+    await this.boss.send('scan-job', { scanId, url, userId, intensity }, {
       retryLimit: 3,
       retryDelay: 5000,
       expireInSeconds: 300,

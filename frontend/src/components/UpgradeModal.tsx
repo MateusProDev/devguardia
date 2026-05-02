@@ -30,14 +30,24 @@ interface Props {
 }
 
 type Step = 'choose-plan' | 'choose-method' | 'card' | 'pix';
+type PlanType = 'SINGLE_SCAN' | 'SUBSCRIPTION_STARTER' | 'SUBSCRIPTION_PRO';
 
-const SINGLE_PRICE = 990;
-const SUB_PRICE = 3990;
+const PLAN_PRICES: Record<PlanType, number> = {
+  SINGLE_SCAN: 990,
+  SUBSCRIPTION_STARTER: 3990,
+  SUBSCRIPTION_PRO: 9990,
+};
+
+const PLAN_LABELS: Record<PlanType, string> = {
+  SINGLE_SCAN: 'Scan Avulso',
+  SUBSCRIPTION_STARTER: 'Starter Mensal',
+  SUBSCRIPTION_PRO: 'Pro Mensal',
+};
 
 export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
   const hasScanId = Boolean(scanId);
   const [step, setStep] = useState<Step>(hasScanId ? 'choose-plan' : 'choose-method');
-  const [selectedType, setSelectedType] = useState<'SINGLE_SCAN' | 'SUBSCRIPTION' | null>(hasScanId ? null : 'SUBSCRIPTION');
+  const [selectedType, setSelectedType] = useState<PlanType | null>(hasScanId ? null : 'SUBSCRIPTION_STARTER');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -98,7 +108,7 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
     };
   }, []);
 
-  function selectPlan(type: 'SINGLE_SCAN' | 'SUBSCRIPTION') {
+  function selectPlan(type: PlanType) {
     setSelectedType(type);
     setStep('choose-method');
     setError('');
@@ -141,7 +151,7 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
     async (bin: string) => {
       if (bin.length < 6 || !selectedType) return;
       try {
-        const amount = selectedType === 'SINGLE_SCAN' ? SINGLE_PRICE : SUB_PRICE;
+        const amount = PLAN_PRICES[selectedType];
         const result = await api.getInstallments(amount, bin);
         if (result?.[0]) {
           setCardBrand(result[0].payment_method_id || '');
@@ -295,8 +305,8 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
     }
   }
 
-  const priceLabel = selectedType === 'SINGLE_SCAN' ? '9,90' : '39,90';
-  const planLabel = selectedType === 'SINGLE_SCAN' ? 'Scan Avulso' : 'Assinatura Mensal';
+  const priceLabel = selectedType ? (PLAN_PRICES[selectedType] / 100).toFixed(2).replace('.', ',') : '0,00';
+  const planLabel = selectedType ? PLAN_LABELS[selectedType] : '';
 
   const stepTitle: Record<Step, string> = {
     'choose-plan': '[UNLOCK_FULL_REPORT]',
@@ -369,7 +379,7 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
                     </div>
                     <div className="font-mono">
                       <p className="text-sm text-green-400">SINGLE_SCAN</p>
-                      <p className="text-gray-600 text-xs">// Acesso completo para este scan</p>
+                      <p className="text-gray-600 text-xs">// Relatório completo deste scan</p>
                     </div>
                   </div>
                   <span className="text-xl font-bold text-white font-mono">R$9,90</span>
@@ -385,7 +395,33 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
               </button>
 
               <button
-                onClick={() => selectPlan('SUBSCRIPTION')}
+                onClick={() => selectPlan('SUBSCRIPTION_STARTER')}
+                className="w-full text-left border border-green-500/20 hover:border-green-500/50 p-5 transition-all"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-green-500/10 border border-green-500/30 flex items-center justify-center">
+                      <Zap className="w-4 h-4 text-green-400" />
+                    </div>
+                    <div className="font-mono">
+                      <p className="text-sm text-green-400">STARTER</p>
+                      <p className="text-gray-600 text-xs">// 5 scans/dia — Nmap básico</p>
+                    </div>
+                  </div>
+                  <span className="text-xl font-bold text-white font-mono">R$39,90<span className="text-xs text-gray-600">/mês</span></span>
+                </div>
+                <ul className="space-y-1.5">
+                  {['5 scans/dia (50/mês)', '10 portas Nmap', 'Explicações com IA', 'Histórico 30 dias'].map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-xs text-gray-500 font-mono">
+                      <span className="text-green-500">[+]</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </button>
+
+              <button
+                onClick={() => selectPlan('SUBSCRIPTION_PRO')}
                 className="w-full text-left border border-green-500/50 p-5 ring-1 ring-green-500/20 transition-all"
               >
                 <div className="flex items-center gap-2 mb-3">
@@ -399,14 +435,14 @@ export default function UpgradeModal({ scanId, onClose, onSuccess }: Props) {
                       <Zap className="w-4 h-4 text-green-400" />
                     </div>
                     <div className="font-mono">
-                      <p className="text-sm text-green-400">SUBSCRIPTION_PRO</p>
-                      <p className="text-gray-600 text-xs">// Scans ilimitados por 30 dias</p>
+                      <p className="text-sm text-green-400">PRO</p>
+                      <p className="text-gray-600 text-xs">// Scans agressivos — 1024+ portas</p>
                     </div>
                   </div>
-                  <span className="text-xl font-bold text-white font-mono">R$39,90</span>
+                  <span className="text-xl font-bold text-white font-mono">R$99,90<span className="text-xs text-gray-600">/mês</span></span>
                 </div>
                 <ul className="space-y-1.5">
-                  {['Tudo do Scan Avulso', 'Scans ilimitados', 'Acesso a todos os relatórios', 'Novos checks automáticos'].map((f) => (
+                  {['30 scans/dia (300/mês)', 'Varredura agressiva (-sV)', 'Fila prioritária', 'Histórico 90 dias'].map((f) => (
                     <li key={f} className="flex items-center gap-2 text-xs text-gray-500 font-mono">
                       <span className="text-green-500">[+]</span>
                       {f}

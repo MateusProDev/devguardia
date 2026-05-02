@@ -48,11 +48,74 @@ export const LIMITS = {
 export const PRICING = {
   // Preços em centavos de BRL
   SINGLE_SCAN_PRICE: 990, // R$ 9,90
-  SUBSCRIPTION_PRICE: 3990, // R$ 39,90
+  STARTER_PRICE: 3990, // R$ 39,90 /mês
+  PRO_PRICE: 9990, // R$ 99,90 /mês
+  ENTERPRISE_PRICE: 0, // Personalizado — definido por contato
   
   // Duração da assinatura em dias
   SUBSCRIPTION_DURATION_DAYS: 30,
 } as const;
+
+// Limites por plano
+export const PLAN_LIMITS = {
+  FREE: {
+    dailyScans: 1,
+    monthlyScans: 5,
+    visibleVulns: 2,
+    intensity: 'BASIC' as const,
+    nmapPorts: '21,22,80,443,8080,8443',
+    nmapTimeout: 15000,
+    aiExplanations: false,
+    historyDays: 7,
+    concurrentScans: 1,
+    priorityQueue: false,
+  },
+  STARTER: {
+    dailyScans: 5,
+    monthlyScans: 50,
+    visibleVulns: Infinity,
+    intensity: 'BASIC' as const,
+    nmapPorts: '21,22,80,443,3306,5432,6379,8080,8443,27017',
+    nmapTimeout: 20000,
+    aiExplanations: true,
+    historyDays: 30,
+    concurrentScans: 2,
+    priorityQueue: false,
+  },
+  PRO: {
+    dailyScans: 30,
+    monthlyScans: 300,
+    visibleVulns: Infinity,
+    intensity: 'AGGRESSIVE' as const,
+    nmapPorts: '1-1024,3306,5432,6379,8080,8443,9200,27017,11211',
+    nmapTimeout: 45000,
+    aiExplanations: true,
+    historyDays: 90,
+    concurrentScans: 5,
+    priorityQueue: true,
+  },
+  ENTERPRISE: {
+    dailyScans: 100,
+    monthlyScans: 1000,
+    visibleVulns: Infinity,
+    intensity: 'AGGRESSIVE' as const,
+    nmapPorts: '1-65535',
+    nmapTimeout: 120000,
+    aiExplanations: true,
+    historyDays: 365,
+    concurrentScans: 10,
+    priorityQueue: true,
+  },
+  SINGLE_SCAN: {
+    visibleVulns: Infinity,
+    intensity: 'BASIC' as const,
+    nmapPorts: '21,22,80,443,3306,5432,6379,8080,8443,27017',
+    nmapTimeout: 20000,
+    aiExplanations: true,
+  },
+} as const;
+
+export type PlanName = keyof typeof PLAN_LIMITS;
 
 // Funções auxiliares para obter valores com fallback para env vars
 export function getPricing(key: keyof typeof PRICING): number {
