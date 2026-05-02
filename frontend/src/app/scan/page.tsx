@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
@@ -9,6 +9,7 @@ import { Terminal, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import ScanConsentModal from '../../components/ScanConsentModal';
 import UpgradeModal from '../../components/UpgradeModal';
+import Turnstile from '../../components/Turnstile';
 
 const checks = [
   'SSL/TLS certificate validation',
@@ -30,6 +31,8 @@ function ScanPageContent() {
   const [showConsent, setShowConsent] = useState(false);
   const [consentText, setConsentText] = useState('');
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const onTurnstileVerify = useCallback((token: string) => setTurnstileToken(token), []);
 
   useEffect(() => {
     const prefilledUrl = searchParams?.get('url') || '';
@@ -71,7 +74,7 @@ function ScanPageContent() {
     setLoading(true);
     setError('');
     try {
-      const scan = await api.createScan(url, true);
+      const scan = await api.createScan(url, true, turnstileToken);
       setShowConsent(false);
       router.push(`/report/${scan.id}`);
     } catch (err: any) {
@@ -164,9 +167,13 @@ function ScanPageContent() {
               </div>
             )}
 
+            <div className="flex justify-center">
+              <Turnstile onVerify={onTurnstileVerify} theme="dark" />
+            </div>
+
             <button
               type="submit"
-              disabled={loading || !url}
+              disabled={loading || !url || !turnstileToken}
               className="btn-primary w-full flex items-center justify-center gap-2 py-3"
             >
               {loading ? (

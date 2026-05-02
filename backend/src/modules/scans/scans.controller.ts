@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { FirebaseAuthGuard } from '../../common/guards/firebase-auth.guard';
+import { TurnstileGuard } from '../../common/guards/turnstile.guard';
 import { ScansService } from './scans.service';
 import { CreateScanDto } from './dto/create-scan.dto';
 
@@ -23,7 +24,7 @@ export class ScansController {
   }
 
   @Post()
-  @UseGuards(FirebaseAuthGuard)
+  @UseGuards(FirebaseAuthGuard, TurnstileGuard)
   @Throttle({ short: { ttl: 60000, limit: 3 } }) // 3 scans por minuto por usuário
   async create(@Req() req: any, @Body() dto: CreateScanDto) {
     const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';

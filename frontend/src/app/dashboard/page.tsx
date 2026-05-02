@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 const SupportChatButton = dynamic(() => import('../../components/SupportChatButton'), { ssr: false });
 import { useRouter } from 'next/navigation';
@@ -10,6 +10,7 @@ import { signOut, signInWithGoogle } from '../../services/auth';
 import { api } from '../../services/api';
 import { Terminal, LogOut, Plus, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import Turnstile from '../../components/Turnstile';
 
 interface ScanItem {
   id: string;
@@ -27,6 +28,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const onTurnstileVerify = useCallback((token: string) => setTurnstileToken(token), []);
 
   useEffect(() => {
     if (!auth) return;
@@ -49,6 +52,7 @@ export default function DashboardPage() {
   }, [router]);
 
   async function handleLogin() {
+    if (!turnstileToken) return;
     setLoginLoading(true);
     try {
       await signInWithGoogle();
@@ -111,9 +115,13 @@ export default function DashboardPage() {
                 </div>
               </div>
 
+              <div className="mb-4 flex justify-center">
+                <Turnstile onVerify={onTurnstileVerify} theme="dark" />
+              </div>
+
               <button
                 onClick={handleLogin}
-                disabled={loginLoading}
+                disabled={loginLoading || !turnstileToken}
                 className="w-full bg-green-600/20 text-green-400 border border-green-500/50 hover:bg-green-600/30 font-mono text-sm py-3 px-6 transition-all uppercase tracking-wider flex items-center justify-center gap-3 disabled:opacity-40"
               >
                 {loginLoading ? (

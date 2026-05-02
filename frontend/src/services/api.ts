@@ -24,8 +24,12 @@ async function authFetch(path: string, options: RequestInit = {}) {
 }
 
 export const api = {
-  createScan: (url: string, acceptedTerms: boolean) =>
-    authFetch('/scan', { method: 'POST', body: JSON.stringify({ url, acceptedTerms }) }),
+  createScan: (url: string, acceptedTerms: boolean, turnstileToken?: string) =>
+    authFetch('/scan', {
+      method: 'POST',
+      headers: turnstileToken ? { 'x-turnstile-token': turnstileToken } : {},
+      body: JSON.stringify({ url, acceptedTerms }),
+    }),
 
   getConsentText: () => authFetch('/scan/consent-text'),
 
