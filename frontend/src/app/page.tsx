@@ -291,7 +291,7 @@ export default function LandingPage() {
             <span className="text-green-400">SYSTEM</span>
             <span className="text-gray-500">&gt;</span>
             <br />
-            <span className="text-white">SECURITY</span>
+            <span className="text-white">DEVGUARDIA</span>
             <span className="text-red-500 animate-pulse">_</span>
             <br />
             <span className="text-gray-500">&lt;/</span>
