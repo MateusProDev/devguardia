@@ -5,6 +5,15 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class AdminService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async getPublicStats() {
+    const [totalUsers, totalScans, totalVulnerabilities] = await Promise.all([
+      this.prisma.user.count(),
+      this.prisma.scan.count(),
+      this.prisma.vulnerability.count(),
+    ]);
+    return { users: totalUsers, scans: totalScans, vulnerabilities: totalVulnerabilities };
+  }
+
   async getStats() {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());

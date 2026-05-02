@@ -31,34 +31,84 @@ import {
   X,
 } from 'lucide-react';
 
+const STATS_API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001') + '/admin/public-stats';
+
 /* ─── Animated counter hook ─── */
-function useCounter(end: number, duration = 2000) {
+function useCounter(target: number, duration = 2000) {
   const [count, setCount] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
+  const hasAnimated = useRef(false);
+  const prevTarget = useRef(0);
+
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          let start = 0;
-          const step = end / (duration / 16);
-          const timer = setInterval(() => {
-            start += step;
-            if (start >= end) {
-              setCount(end);
-              clearInterval(timer);
-            } else {
-              setCount(Math.floor(start));
-            }
-          }, 16);
-          observer.disconnect();
+    if (target === 0) return;
+    // First time: animate from 0 when visible
+    if (!hasAnimated.current) {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            hasAnimated.current = true;
+            prevTarget.current = target;
+            let start = 0;
+            const step = target / (duration / 16);
+            const timer = setInterval(() => {
+              start += step;
+              if (start >= target) {
+                setCount(target);
+                clearInterval(timer);
+              } else {
+                setCount(Math.floor(start));
+              }
+            }, 16);
+            observer.disconnect();
+          }
+        },
+        { threshold: 0.3 }
+      );
+      if (ref.current) observer.observe(ref.current);
+      return () => observer.disconnect();
+    }
+    // Subsequent updates: smooth transition from previous value
+    if (target !== prevTarget.current) {
+      const from = prevTarget.current;
+      prevTarget.current = target;
+      const diff = target - from;
+      if (diff === 0) return;
+      let start = 0;
+      const steps = 30;
+      const step = diff / steps;
+      const timer = setInterval(() => {
+        start += step;
+        if ((diff > 0 && from + start >= target) || (diff < 0 && from + start <= target)) {
+          setCount(target);
+          clearInterval(timer);
+        } else {
+          setCount(Math.floor(from + start));
         }
-      },
-      { threshold: 0.3 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [end, duration]);
+      }, 16);
+      return () => clearInterval(timer);
+    }
+  }, [target, duration]);
+
   return { count, ref };
+}
+
+/* ─── Live stats hook ─── */
+function useLiveStats() {
+  const [data, setData] = useState({ users: 0, scans: 0, vulnerabilities: 0 });
+  useEffect(() => {
+    let active = true;
+    async function fetchStats() {
+      try {
+        const res = await fetch(STATS_API);
+        if (res.ok && active) setData(await res.json());
+      } catch {}
+    }
+    fetchStats();
+    const interval = setInterval(fetchStats, 30000);
+    return () => { active = false; clearInterval(interval); };
+  }, []);
+  return data;
 }
 
 export default function LandingPage() {
@@ -80,10 +130,11 @@ export default function LandingPage() {
     }
   }
 
+  const liveData = useLiveStats();
   const stats = {
-    scans: useCounter(74),
-    vulns: useCounter(312),
-    users: useCounter(23),
+    scans: useCounter(liveData.scans),
+    vulns: useCounter(liveData.vulnerabilities),
+    users: useCounter(liveData.users),
   };
 
   return (

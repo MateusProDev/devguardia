@@ -8,6 +8,12 @@ import { AdminService } from './admin.service';
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
+  @Get('public-stats')
+  @Throttle({ short: { ttl: 60000, limit: 10 } })
+  getPublicStats() {
+    return this.adminService.getPublicStats();
+  }
+
   @Get('stats')
   @UseGuards(FirebaseAuthGuard, AdminGuard)
   getStats() {
