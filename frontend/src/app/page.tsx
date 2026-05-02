@@ -34,7 +34,7 @@ import {
 const API_BASE = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
   ? 'https://api.devguardia.cloud'
   : 'http://localhost:3001';
-const STATS_API = API_BASE + '/admin/public-stats';
+const STATS_API = API_BASE + '/api/admin/public-stats';
 
 /* ─── Animated counter hook ─── */
 function useCounter(target: number, duration = 2000) {
