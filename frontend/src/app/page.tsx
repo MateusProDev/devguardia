@@ -31,7 +31,10 @@ import {
   X,
 } from 'lucide-react';
 
-const STATS_API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001') + '/admin/public-stats';
+const API_BASE = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+  ? 'https://devguard-backend.onrender.com'
+  : 'http://localhost:3001';
+const STATS_API = API_BASE + '/admin/public-stats';
 
 /* ─── Animated counter hook ─── */
 function useCounter(target: number, duration = 2000) {
