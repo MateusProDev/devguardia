@@ -119,6 +119,21 @@ export default function LandingPage() {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
+  /* Typewriter for DEVGUARDIA */
+  const brandText = 'DEVGUARDIA';
+  const [typed, setTyped] = useState('');
+  const [showCaret, setShowCaret] = useState(true);
+  useEffect(() => {
+    let i = 0;
+    const timer = setInterval(() => {
+      i++;
+      setTyped(brandText.slice(0, i));
+      if (i >= brandText.length) clearInterval(timer);
+    }, 120);
+    const blink = setInterval(() => setShowCaret(v => !v), 530);
+    return () => { clearInterval(timer); clearInterval(blink); };
+  }, []);
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', onScroll);
@@ -291,8 +306,8 @@ export default function LandingPage() {
             <span className="text-green-400">SYSTEM</span>
             <span className="text-gray-500">&gt;</span>
             <br />
-            <span className="text-white">DEVGUARDIA</span>
-            <span className="text-red-500 animate-pulse">_</span>
+            <span className="text-white">{typed}</span>
+            <span className={`text-red-500 ${showCaret ? 'opacity-100' : 'opacity-0'} transition-opacity duration-100`}>_</span>
             <br />
             <span className="text-gray-500">&lt;/</span>
             <span className="text-green-400">SYSTEM</span>
