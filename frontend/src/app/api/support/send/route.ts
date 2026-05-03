@@ -7,15 +7,37 @@ import admin from 'firebase-admin';
 // - FIREBASE_PROJECT_ID: id do projeto
 
 function initFirebase() {
-  if (!admin.apps.length) {
-    const sa = process.env.FIREBASE_SERVICE_ACCOUNT;
-    if (!sa) throw new Error('FIREBASE_SERVICE_ACCOUNT não configurado');
+  if (admin.apps.length) return;
+
+  // Opção 1: JSON completo em FIREBASE_SERVICE_ACCOUNT
+  const sa = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (sa) {
     const cred = JSON.parse(sa);
     admin.initializeApp({
       credential: admin.credential.cert(cred),
-      projectId: process.env.FIREBASE_PROJECT_ID,
+      projectId: process.env.FIREBASE_PROJECT_ID || cred.project_id,
     });
+    return;
   }
+
+  // Opção 2: variáveis separadas (mesmo formato do backend)
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+  if (projectId && clientEmail && privateKey) {
+    // Converter \n literal em quebra real (Vercel armazena como string escapada)
+    privateKey = privateKey.replace(/\\n/g, '\n');
+    admin.initializeApp({
+      credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
+      projectId,
+    });
+    return;
+  }
+
+  throw new Error(
+    'Firebase Admin não configurado. Defina FIREBASE_SERVICE_ACCOUNT (JSON) OU FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY.',
+  );
 }
 
 const RATE_LIMIT_WINDOW_SECONDS = 60;
@@ -39,8 +61,12 @@ export async function POST(req: NextRequest) {
   try {
     initFirebase();
   } catch (err: any) {
-    console.error('init firebase error', err.message || err);
-    return NextResponse.json({ ok: false, error: 'server_init' }, { status: 500 });
+    const msg = err?.message || String(err);
+    console.error('init firebase error', msg);
+    return NextResponse.json(
+      { ok: false, error: 'server_init', detail: msg },
+      { status: 500 },
+    );
   }
 
   const db = admin.firestore();
