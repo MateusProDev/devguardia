@@ -61,7 +61,11 @@ export default function Turnstile({
     return () => {
       clearInterval(interval);
       if (widgetIdRef.current && window.turnstile) {
-        window.turnstile.remove(widgetIdRef.current);
+        try {
+          window.turnstile.remove(widgetIdRef.current);
+        } catch {
+          // Widget already removed (StrictMode/HMR) — ignore
+        }
         widgetIdRef.current = null;
       }
     };
