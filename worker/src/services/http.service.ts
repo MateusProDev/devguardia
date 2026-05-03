@@ -5,6 +5,57 @@ interface VulnRaw {
   solution: string;
 }
 
+const MAX_BODY_BYTES = 2 * 1024 * 1024; // 2 MB — o suficiente para qualquer HTML real
+
+/** Reads up to maxBytes of a response body, avoids OOM on huge pages. */
+async function readBodyLimited(res: Response, maxBytes = MAX_BODY_BYTES): Promise<string> {
+  if (!res.body) return '';
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (total < maxBytes) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    const remaining = maxBytes - total;
+    if (value.byteLength > remaining) {
+      chunks.push(value.slice(0, remaining));
+      total += remaining;
+      try { await reader.cancel(); } catch { /* ignore */ }
+      break;
+    }
+    chunks.push(value);
+    total += value.byteLength;
+  }
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const c of chunks) { merged.set(c, offset); offset += c.byteLength; }
+  return new TextDecoder('utf-8', { fatal: false }).decode(merged);
+}
+
+/** Strips HTML/JS comments so credential regex doesn't match documentation examples. */
+function stripCommentsAndStrings(html: string): string {
+  return html
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '');
+}
+
+/** Returns true if the value looks like a placeholder / example / mock and not a real secret. */
+function looksLikePlaceholder(value: string): boolean {
+  const lower = value.toLowerCase();
+  const placeholderWords = [
+    'example', 'exemplo', 'placeholder', 'your_', 'your-', 'sample', 'mock', 'dummy',
+    'test123', 'password123', 'senha123', 'xxxxx', '123456', 'abcdef', 'changeme',
+    '<your', '{your', 'insert_', 'replace_', 'todo', 'fixme', 'lorem',
+  ];
+  if (placeholderWords.some(w => lower.includes(w))) return true;
+  // Low entropy: all same char, sequential, or < 4 distinct chars
+  const distinct = new Set(value).size;
+  if (distinct < 4) return true;
+  return false;
+}
+
 export class HttpAnalyzerService {
   async analyze(url: string): Promise<VulnRaw[]> {
     const vulns: VulnRaw[] = [];
@@ -97,23 +148,24 @@ export class HttpAnalyzerService {
         }
       }
 
-      // 3. Information disclosure
+      // 3. Information disclosure — só reporta se a VERSÃO estiver exposta (com números)
       const serverHeader = headers.get('server');
-      if (serverHeader && /apache|nginx|iis|php|express/i.test(serverHeader)) {
+      if (serverHeader && /(apache|nginx|iis|openssl|php|express|tomcat|lighttpd|caddy)[\/ ][\d.]+/i.test(serverHeader)) {
         vulns.push({
           title: 'Versão do servidor exposta',
           severity: 'LOW',
-          description: `O header Server revela informações do software: "${serverHeader}". Isso facilita ataques dirigidos.`,
-          solution: 'Remova ou ofusque o header Server nas configurações do seu servidor web.',
+          description: `O header Server revela a versão exata do software: "${serverHeader}". Isso facilita ataques dirigidos a CVEs conhecidas da versão.`,
+          solution: 'Remova ou ofusque a versão no header Server nas configurações do seu servidor web (ex: nginx server_tokens off;).',
         });
       }
 
       const poweredBy = headers.get('x-powered-by');
-      if (poweredBy) {
+      // Só reporta se tiver versão numérica (ex: "PHP/7.4.3", "Express/4.18")
+      if (poweredBy && /[\d.]+/.test(poweredBy)) {
         vulns.push({
-          title: 'X-Powered-By exposto',
+          title: 'X-Powered-By expõe versão da tecnologia',
           severity: 'LOW',
-          description: `O header X-Powered-By revela a tecnologia: "${poweredBy}".`,
+          description: `O header X-Powered-By revela a tecnologia e versão: "${poweredBy}".`,
           solution: 'Remova o header X-Powered-By. Em Express.js: app.disable("x-powered-by")',
         });
       }
@@ -130,39 +182,65 @@ export class HttpAnalyzerService {
         });
       }
 
-      // 5. Cookie security
-      const setCookieHeader = headers.get('set-cookie');
-      if (setCookieHeader) {
-        if (!setCookieHeader.includes('Secure')) {
-          vulns.push({
-            title: 'Cookie sem flag Secure',
-            severity: 'MEDIUM',
-            description: 'Cookies estão sendo definidos sem a flag Secure, podendo ser transmitidos via HTTP.',
-            solution: 'Adicione a flag Secure a todos os cookies: Set-Cookie: nome=valor; Secure; HttpOnly',
-          });
-        }
-        if (!setCookieHeader.includes('HttpOnly')) {
-          vulns.push({
-            title: 'Cookie sem flag HttpOnly',
-            severity: 'MEDIUM',
-            description: 'Cookies sem HttpOnly podem ser acessados via JavaScript, facilitando XSS.',
-            solution: 'Adicione a flag HttpOnly: Set-Cookie: nome=valor; HttpOnly',
-          });
-        }
-        if (!setCookieHeader.toLowerCase().includes('samesite')) {
-          vulns.push({
-            title: 'Cookie sem atributo SameSite',
-            severity: 'LOW',
-            description: 'Sem SameSite, cookies podem ser enviados em requests cross-site (CSRF).',
-            solution: 'Adicione SameSite=Strict ou SameSite=Lax aos cookies de sessão.',
-          });
-        }
+      // 5. Cookie security — valida CADA cookie individualmente, só reporta os sensíveis/de sessão
+      const setCookieList: string[] =
+        typeof (headers as any).getSetCookie === 'function'
+          ? (headers as any).getSetCookie()
+          : (headers.get('set-cookie') ? [headers.get('set-cookie')!] : []);
+
+      const sessionCookieRegex = /^(session|sess|sid|auth|token|jwt|connect\.sid|phpsessid|jsessionid|asp\.?net_sessionid|laravel_session|_session)/i;
+      const cookiesWithoutSecure: string[] = [];
+      const cookiesWithoutHttpOnly: string[] = [];
+      const cookiesWithoutSameSite: string[] = [];
+
+      for (const raw of setCookieList) {
+        const name = raw.split('=')[0]?.trim() || '';
+        const isSessionLike = sessionCookieRegex.test(name);
+        const lower = raw.toLowerCase();
+        const hasSecure = /;\s*secure(\s*;|\s*$)/i.test(raw);
+        const hasHttpOnly = /;\s*httponly(\s*;|\s*$)/i.test(raw);
+        const hasSameSite = /;\s*samesite=/i.test(lower);
+
+        // Secure: só é problema se o site for HTTPS e o cookie não tiver Secure
+        if (finalUrl.startsWith('https://') && !hasSecure) cookiesWithoutSecure.push(name);
+        // HttpOnly: só faz sentido em cookies de sessão/auth. CSRF tokens e prefs do usuário não precisam.
+        if (isSessionLike && !hasHttpOnly) cookiesWithoutHttpOnly.push(name);
+        // SameSite: só reportamos em cookies de sessão
+        if (isSessionLike && !hasSameSite) cookiesWithoutSameSite.push(name);
       }
 
-      // 6. HTTPS redirect check
+      if (cookiesWithoutSecure.length > 0) {
+        vulns.push({
+          title: 'Cookie(s) sem flag Secure em site HTTPS',
+          severity: 'MEDIUM',
+          description: `Os cookies [${cookiesWithoutSecure.join(', ')}] são definidos sem a flag Secure em um site HTTPS, podendo ser transmitidos via HTTP em cenários de downgrade.`,
+          solution: 'Adicione a flag Secure aos cookies: Set-Cookie: nome=valor; Secure; HttpOnly; SameSite=Lax',
+        });
+      }
+      if (cookiesWithoutHttpOnly.length > 0) {
+        vulns.push({
+          title: 'Cookie de sessão sem flag HttpOnly',
+          severity: 'MEDIUM',
+          description: `Os cookies de sessão [${cookiesWithoutHttpOnly.join(', ')}] não têm HttpOnly, permitindo acesso via JavaScript e facilitando roubo de sessão via XSS.`,
+          solution: 'Adicione a flag HttpOnly aos cookies de sessão: Set-Cookie: session=valor; HttpOnly',
+        });
+      }
+      if (cookiesWithoutSameSite.length > 0) {
+        vulns.push({
+          title: 'Cookie de sessão sem atributo SameSite',
+          severity: 'LOW',
+          description: `Os cookies de sessão [${cookiesWithoutSameSite.join(', ')}] não definem SameSite, aumentando risco de CSRF.`,
+          solution: 'Adicione SameSite=Strict ou SameSite=Lax aos cookies de sessão.',
+        });
+      }
+
+      // 6. HTTPS redirect check — ignora se HSTS preload está ativo (browser já força HTTPS)
+      const hsts = headers.get('strict-transport-security') || '';
+      const hasHstsPreload = /preload/i.test(hsts) && /max-age=\s*\d{7,}/i.test(hsts);
+
       try {
         const httpUrl = url.replace(/^https:\/\//, 'http://');
-        if (httpUrl !== url) {
+        if (httpUrl !== url && !hasHstsPreload) {
           const httpController = new AbortController();
           const httpTimeout = setTimeout(() => httpController.abort(), 5000);
           const httpResp = await fetch(httpUrl, {
@@ -173,16 +251,19 @@ export class HttpAnalyzerService {
           });
           clearTimeout(httpTimeout);
           const location = httpResp.headers.get('location') || '';
-          if (httpResp.status < 300 || httpResp.status >= 400 || !location.startsWith('https://')) {
+          const isRedirect = httpResp.status >= 300 && httpResp.status < 400;
+          const redirectsToHttps = location.startsWith('https://') || (location.startsWith('/') && finalUrl.startsWith('https://'));
+          // Só reporta se HTTP RESPONDEU (status 2xx explícito) OU redirecionou para outro HTTP
+          if ((httpResp.status >= 200 && httpResp.status < 300) || (isRedirect && !redirectsToHttps && location.startsWith('http://'))) {
             vulns.push({
               title: 'HTTP não redireciona para HTTPS',
               severity: 'MEDIUM',
-              description: 'Acessar o site via HTTP não redireciona automaticamente para HTTPS.',
-              solution: 'Configure um redirect 301 de HTTP para HTTPS no servidor.',
+              description: 'Acessar o site via HTTP retorna conteúdo ou redireciona para outra URL HTTP sem criptografia.',
+              solution: 'Configure redirect 301 de HTTP para HTTPS no servidor e habilite HSTS com preload.',
             });
           }
         }
-      } catch { /* skip if http not available */ }
+      } catch { /* HTTP inacessível é o comportamento correto — não reporta nada */ }
 
       // 7. Cross-Origin-Opener-Policy
       if (!headers.get('cross-origin-opener-policy')) {
@@ -204,25 +285,51 @@ export class HttpAnalyzerService {
         });
       }
 
-      // 9. Check page body for sensitive info leaks
-      const body = await response.text();
-      const sensitivePatterns = [
-        { pattern: /(?:sk_live_|sk_test_)[a-zA-Z0-9]{20,}/, title: 'Chave Stripe exposta no HTML', severity: 'CRITICAL' as const },
-        { pattern: /(?:AKIA|ASIA)[A-Z0-9]{16}/, title: 'AWS Access Key exposta no HTML', severity: 'CRITICAL' as const },
-        { pattern: /(?:-----BEGIN (?:RSA |EC )?PRIVATE KEY-----)/, title: 'Chave privada exposta no HTML', severity: 'CRITICAL' as const },
-        { pattern: /(?:mongodb\+srv|postgresql|mysql):\/\/[^\s"'<]+/, title: 'String de conexão de banco exposta no HTML', severity: 'CRITICAL' as const },
-        { pattern: /(?:password|secret|token|api.?key)\s*[:=]\s*["'][^"']{8,}["']/i, title: 'Possível credencial exposta no HTML', severity: 'HIGH' as const },
+      // 9. Check page body for sensitive info leaks (com validação de contexto)
+      const rawBody = await readBodyLimited(response);
+      const body = stripCommentsAndStrings(rawBody);
+
+      // Patterns de alta confiança — formato exato, baixo risco de falso positivo
+      const highConfidencePatterns = [
+        { pattern: /(?:sk_live_)[a-zA-Z0-9]{24,}/g, title: 'Chave Stripe LIVE exposta no HTML', severity: 'CRITICAL' as const },
+        { pattern: /(?:sk_test_)[a-zA-Z0-9]{24,}/g, title: 'Chave Stripe TEST exposta no HTML', severity: 'HIGH' as const },
+        { pattern: /(?:AKIA|ASIA)[A-Z0-9]{16}/g, title: 'AWS Access Key exposta no HTML', severity: 'CRITICAL' as const },
+        { pattern: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g, title: 'Chave privada exposta no HTML', severity: 'CRITICAL' as const },
+        { pattern: /(?:mongodb(?:\+srv)?|postgresql|mysql|redis):\/\/[^:\s"'<>]+:[^@\s"'<>]+@[^\s"'<>]+/g, title: 'String de conexão de banco com credenciais exposta', severity: 'CRITICAL' as const },
+        { pattern: /ghp_[a-zA-Z0-9]{36,}/g, title: 'GitHub Personal Access Token exposto', severity: 'CRITICAL' as const },
+        { pattern: /xox[baprs]-[a-zA-Z0-9-]{10,}/g, title: 'Slack token exposto', severity: 'HIGH' as const },
       ];
 
-      for (const { pattern, title, severity } of sensitivePatterns) {
-        if (pattern.test(body)) {
+      for (const { pattern, title, severity } of highConfidencePatterns) {
+        const matches = body.match(pattern);
+        if (matches && matches.some(m => !looksLikePlaceholder(m))) {
           vulns.push({
             title,
             severity,
-            description: `O HTML da página contém informações sensíveis que podem ser exploradas por atacantes.`,
-            solution: 'Remova todas as credenciais e chaves do código frontend. Use variáveis de ambiente no servidor.',
+            description: `O HTML da página contém credenciais em formato de chave real (não placeholder). Atacantes podem extrair e usar essas chaves.`,
+            solution: 'Remova todas as credenciais reais do código frontend. Use variáveis de ambiente no servidor e nunca exponha chaves ao browser.',
           });
         }
+      }
+
+      // Pattern de baixa confiança — só reporta se aparecer em contexto suspeito (ex: <script>, JSON embutido)
+      const genericCredPattern = /(?:password|passwd|secret|api[_-]?key|apikey|access[_-]?token|auth[_-]?token)\s*[:=]\s*["']([^"']{12,})["']/gi;
+      const genericMatches = [...body.matchAll(genericCredPattern)];
+      const suspiciousGenericMatches = genericMatches.filter(m => {
+        const value = m[1];
+        if (looksLikePlaceholder(value)) return false;
+        // Precisa ter entropia mínima: mix de letras e números/símbolos
+        const hasLetters = /[a-zA-Z]/.test(value);
+        const hasDigitsOrSymbols = /[\d!@#$%^&*()\-_+=]/.test(value);
+        return hasLetters && hasDigitsOrSymbols;
+      });
+      if (suspiciousGenericMatches.length > 0) {
+        vulns.push({
+          title: 'Possível credencial hardcoded no HTML',
+          severity: 'HIGH',
+          description: `Foram encontradas ${suspiciousGenericMatches.length} ocorrência(s) de padrões como "password"/"api_key" com valor de aparência real (não placeholder). Revise manualmente.`,
+          solution: 'Remova credenciais reais do frontend. Use variáveis de ambiente no servidor e proxy autenticado para APIs.',
+        });
       }
 
       // 10. Check for common misconfigurations via well-known paths
