@@ -10,6 +10,7 @@ import Link from 'next/link';
 import ScoreCard from '../../../components/ScoreCard';
 import VulnerabilityList from '../../../components/VulnerabilityList';
 import UpgradeModal from '../../../components/UpgradeModal';
+import ScanProgressTerminal from '../../../components/ScanProgressTerminal';
 
 interface Vulnerability {
   id: string;
@@ -151,12 +152,12 @@ export default function ReportPage() {
 
         {/* Score */}
         {isScanning ? (
-          <div className="card flex items-center gap-4 mb-6">
-            <Loader2 className="w-6 h-6 text-green-500 animate-spin" />
-            <div className="font-mono">
-              <p className="text-sm text-green-400">SCANNING_TARGET...</p>
-              <p className="text-gray-600 text-xs">// Estimativa: 30 segundos</p>
-            </div>
+          <div className="mb-6">
+            <ScanProgressTerminal
+              startedAt={report.createdAt}
+              url={report.url}
+              estimatedSeconds={35}
+            />
           </div>
         ) : (
           report.score !== null && <ScoreCard score={report.score} summary={report.summary} />
