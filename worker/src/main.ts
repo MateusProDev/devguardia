@@ -24,12 +24,19 @@ const boss = new PgBoss(connectionString);
 
 // Health check HTTP server (required for Render free tier)
 const port = parseInt(process.env.PORT || '3002');
+const securityHeaders: Record<string, string> = {
+  'X-Frame-Options': 'DENY',
+  'X-Content-Type-Options': 'nosniff',
+  'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Cache-Control': 'no-store',
+};
 const server = createServer((req, res) => {
-  if (req.url === '/health') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', service: 'worker', timestamp: new Date().toISOString() }));
+  if (req.url === '/health' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json', ...securityHeaders });
+    res.end(JSON.stringify({ status: 'ok', service: 'devguard-worker', timestamp: new Date().toISOString() }));
   } else {
-    res.writeHead(404);
+    res.writeHead(404, securityHeaders);
     res.end();
   }
 });

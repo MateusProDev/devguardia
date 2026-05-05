@@ -1,15 +1,22 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Header, Res } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
+import { Response } from 'express';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Controller('health')
+@SkipThrottle()
 export class HealthController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Get()
-  async check() {
+  @Header('X-Frame-Options', 'DENY')
+  @Header('X-Content-Type-Options', 'nosniff')
+  @Header('Cache-Control', 'no-store')
+  async check(@Res() res: Response) {
     const checks = {
-      status: 'ok',
+      status: 'ok' as string,
       timestamp: new Date().toISOString(),
+      service: 'devguard-backend',
       checks: {} as Record<string, any>,
     };
 
@@ -34,6 +41,6 @@ export class HealthController {
     }
 
     const statusCode = checks.status === 'ok' ? 200 : 503;
-    return { ...checks, statusCode };
+    return res.status(statusCode).json(checks);
   }
 }

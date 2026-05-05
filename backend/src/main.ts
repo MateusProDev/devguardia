@@ -47,10 +47,23 @@ async function bootstrap() {
     logger: process.env.NODE_ENV === 'production' ? ['error', 'warn', 'log'] : ['error', 'warn', 'log', 'debug'],
   });
 
+  // HTTP → HTTPS redirect in production (Render terminates TLS at load balancer)
+  if (process.env.NODE_ENV === 'production') {
+    app.use((req: any, res: any, next: any) => {
+      if (req.headers['x-forwarded-proto'] !== 'https') {
+        return res.redirect(301, `https://${req.headers.host}${req.url}`);
+      }
+      next();
+    });
+  }
+
   app.use(
     helmet({
       crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
       hsts: { maxAge: 63072000, includeSubDomains: true, preload: true },
+      frameguard: { action: 'deny' },
+      noSniff: true,
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
     }),
   );
 
@@ -91,7 +104,9 @@ async function bootstrap() {
     app.use(Sentry.Handlers.tracingHandler());
   }
 
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api', {
+    exclude: ['health'],
+  });
 
   // Configurar Swagger/OpenAPI
   const config = new DocumentBuilder()

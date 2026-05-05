@@ -6,6 +6,35 @@ import admin from 'firebase-admin';
 // - FIREBASE_SERVICE_ACCOUNT: JSON string do service account
 // - FIREBASE_PROJECT_ID: id do projeto
 
+/** Normalizes a Firebase private key from env var to valid PEM format.
+ *  Handles: extra quotes, literal \\n, double-escaped \\\\n, JSON-encoded strings, missing newlines. */
+function normalizePrivateKey(raw: string): string {
+  let key = raw.trim();
+
+  // Strip surrounding double or single quotes (Vercel UI sometimes adds them)
+  if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) {
+    key = key.slice(1, -1);
+  }
+
+  // If it looks like a JSON string (starts with "), try parsing it
+  if (key.startsWith('"')) {
+    try { key = JSON.parse(key); } catch { /* keep as-is */ }
+  }
+
+  // Replace double-escaped newlines \\n → \n, then literal \n → real newline
+  key = key.replace(/\\\\n/g, '\n').replace(/\\n/g, '\n');
+
+  // Ensure the key has proper BEGIN/END markers with newlines
+  if (!key.includes('\n') && key.includes('-----BEGIN')) {
+    // Everything is on one line — insert newlines at the markers
+    key = key
+      .replace(/(-----BEGIN [A-Z ]+-----)/, '$1\n')
+      .replace(/(-----END [A-Z ]+-----)/, '\n$1');
+  }
+
+  return key;
+}
+
 function initFirebase() {
   if (admin.apps.length) return;
 
@@ -26,8 +55,7 @@ function initFirebase() {
   let privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
   if (projectId && clientEmail && privateKey) {
-    // Converter \n literal em quebra real (Vercel armazena como string escapada)
-    privateKey = privateKey.replace(/\\n/g, '\n');
+    privateKey = normalizePrivateKey(privateKey);
     admin.initializeApp({
       credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
       projectId,
