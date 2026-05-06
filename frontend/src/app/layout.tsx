@@ -3,7 +3,7 @@ import Script from 'next/script';
 import './globals.css';
 import PageTracker from '../components/PageTracker';
 
-const siteUrl = 'https://app.devguardia.cloud';
+const siteUrl = 'https://www.devguardia.cloud';
 
 export const metadata: Metadata = {
   title: {
@@ -95,6 +95,9 @@ export const metadata: Metadata = {
     ],
   },
   manifest: '/manifest.json',
+  verification: {
+    google: 'zMqzyZXQSDRQ39JNrYTeechlX1T0RpXSNTaeHjsQQAs',
+  },
   other: {
     'msapplication-TileColor': '#030712',
     'msapplication-TileImage': '/ms-icon-144x144.png',

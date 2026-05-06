@@ -1,7 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /admin
-Disallow: /dashboard
-Disallow: /report/
-
-Sitemap: https://app.devguardia.cloud/sitemap.xml
