@@ -1,6 +1,17 @@
+/**
+ * DevGuard Scan Processor v3.0
+ *
+ * Mudanças desde v2:
+ *   - Concorrência limitada de chamadas IA (evita rate limit Cloudflare)
+ *   - Deduplicação de vulnerabilidades (mesma title + severity = 1 entrada)
+ *   - Ordenação por severidade (CRITICAL primeiro)
+ *   - SiteUnreachableError marca scan como FAILED com mensagem clara
+ *   - Detecção de scan vazio quando ambos analyzers falham silenciosamente
+ */
+
 import { PrismaClient } from '@prisma/client';
 import { NmapService, ScanMode } from '../services/nmap.service';
-import { HttpAnalyzerService } from '../services/http.service';
+import { HttpAnalyzerService, SiteUnreachableError } from '../services/http.service';
 import { AiWorkerService } from '../services/ai.service';
 import { calculateScore } from '../utils/score-calculator';
 
@@ -8,6 +19,56 @@ const nmapService = new NmapService();
 const httpService = new HttpAnalyzerService();
 const aiService = new AiWorkerService();
 const processingScans = new Set<string>();
+
+const SEVERITY_ORDER: Record<string, number> = {
+  CRITICAL: 0,
+  HIGH: 1,
+  MEDIUM: 2,
+  LOW: 3,
+  INFO: 4,
+};
+
+const AI_CONCURRENCY = 3; // máximo de chamadas IA simultâneas
+
+interface VulnRaw {
+  title: string;
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO';
+  description: string;
+  solution: string;
+}
+
+/** Remove vulnerabilidades duplicadas (mesma title + severity). */
+function dedupVulns(vulns: VulnRaw[]): VulnRaw[] {
+  const seen = new Set<string>();
+  const out: VulnRaw[] = [];
+  for (const v of vulns) {
+    const key = `${v.severity}::${v.title}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(v);
+  }
+  return out;
+}
+
+/** Ordena por severidade (CRITICAL primeiro). */
+function sortBySeverity<T extends { severity: string }>(vulns: T[]): T[] {
+  return [...vulns].sort((a, b) => (SEVERITY_ORDER[a.severity] ?? 99) - (SEVERITY_ORDER[b.severity] ?? 99));
+}
+
+/** Executa promises com concorrência limitada (semáforo simples). */
+async function runWithLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let idx = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (true) {
+      const i = idx++;
+      if (i >= items.length) return;
+      results[i] = await fn(items[i]);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
 
 export async function scanProcessor(scanId: string, url: string, userId: string, prisma: PrismaClient, intensity: ScanMode = 'BASIC') {
   const startTime = Date.now();
@@ -20,7 +81,7 @@ export async function scanProcessor(scanId: string, url: string, userId: string,
   processingScans.add(scanId);
 
   try {
-    console.log(`[SCAN ${scanId}] Starting scan...`);
+    console.log(`[SCAN ${scanId}] Starting scan v3.0...`);
 
     // Verificar se scan existe e não está já completado
     const scan = await prisma.scan.findUnique({ where: { id: scanId } });
@@ -29,7 +90,6 @@ export async function scanProcessor(scanId: string, url: string, userId: string,
       throw new Error(`Scan ${scanId} not found`);
     }
 
-    // Se scan já está completado ou falhou, não processar novamente
     if (scan.status === 'COMPLETED' || scan.status === 'FAILED') {
       console.warn(`[SCAN ${scanId}] Scan already in status ${scan.status}, skipping`);
       return;
@@ -43,49 +103,65 @@ export async function scanProcessor(scanId: string, url: string, userId: string,
     const parsedUrl = new URL(url);
     const hostname = parsedUrl.hostname;
 
-    console.log(`[SCAN ${scanId}] Target: ${url} (hostname: ${hostname})`);
+    console.log(`[SCAN ${scanId}] Target: ${url} (hostname: ${hostname}) intensity=${intensity}`);
 
     const nmapStart = Date.now();
     const httpStart = Date.now();
 
-    console.log(`[SCAN ${scanId}] Intensity: ${intensity}`);
-
-    const [nmapVulns, httpVulns] = await Promise.all([
+    // Execução paralela. HTTP pode lançar SiteUnreachableError → falha o scan.
+    const [nmapResult, httpResult] = await Promise.allSettled([
       nmapService.scan(hostname, intensity).then((r) => {
-        console.log(`[SCAN ${scanId}] Nmap finished in ${Date.now() - nmapStart}ms — found ${r.length} vulns: ${r.map((v) => v.title).join(', ') || 'none'}`);
+        console.log(`[SCAN ${scanId}] Nmap finished in ${Date.now() - nmapStart}ms — ${r.length} vulns`);
         return r;
       }),
       httpService.analyze(url).then((r) => {
-        console.log(`[SCAN ${scanId}] HTTP finished in ${Date.now() - httpStart}ms — found ${r.length} vulns: ${r.map((v) => `${v.title}[${v.severity}]`).join(', ') || 'none'}`);
+        console.log(`[SCAN ${scanId}] HTTP finished in ${Date.now() - httpStart}ms — ${r.length} vulns`);
         return r;
       }),
     ]);
 
-    const allVulns = [...nmapVulns, ...httpVulns];
+    // Se HTTP falhou com SiteUnreachableError, marcar scan como FAILED com mensagem clara
+    if (httpResult.status === 'rejected') {
+      const err = httpResult.reason;
+      if (err instanceof SiteUnreachableError) {
+        const msg = `Site inacessível: ${err.cause}`;
+        console.error(`[SCAN ${scanId}] ${msg}`);
+        await prisma.scan.update({
+          where: { id: scanId },
+          data: { status: 'FAILED', errorMsg: msg },
+        });
+        return;
+      }
+      // Outros erros HTTP — log mas continua (pode ser timeout em sub-fetch)
+      console.error(`[SCAN ${scanId}] HTTP analysis error (non-fatal):`, err);
+    }
+
+    const nmapVulns: VulnRaw[] = nmapResult.status === 'fulfilled' ? nmapResult.value : [];
+    const httpVulns: VulnRaw[] = httpResult.status === 'fulfilled' ? httpResult.value : [];
+
+    // Dedup + sort
+    const allVulns = sortBySeverity(dedupVulns([...nmapVulns, ...httpVulns]));
     const score = calculateScore(allVulns);
 
     console.log(`[SCAN ${scanId}] Total vulns: ${allVulns.length}, Score: ${score}`);
-    console.log(`[SCAN ${scanId}] Severity breakdown: CRITICAL=${allVulns.filter((v) => v.severity === 'CRITICAL').length} HIGH=${allVulns.filter((v) => v.severity === 'HIGH').length} MEDIUM=${allVulns.filter((v) => v.severity === 'MEDIUM').length} LOW=${allVulns.filter((v) => v.severity === 'LOW').length} INFO=${allVulns.filter((v) => v.severity === 'INFO').length}`);
+    console.log(`[SCAN ${scanId}] Severity breakdown: CRITICAL=${allVulns.filter(v => v.severity === 'CRITICAL').length} HIGH=${allVulns.filter(v => v.severity === 'HIGH').length} MEDIUM=${allVulns.filter(v => v.severity === 'MEDIUM').length} LOW=${allVulns.filter(v => v.severity === 'LOW').length} INFO=${allVulns.filter(v => v.severity === 'INFO').length}`);
 
-    // Enrich CRITICAL, HIGH, MEDIUM vulns with AI
+    // Enriquecer vulns CRITICAL/HIGH/MEDIUM com IA (concorrência limitada)
     const aiStart = Date.now();
-    const enriched = await Promise.all(
-      allVulns.map(async (v) => {
-        if (["CRITICAL", "HIGH", "MEDIUM"].includes(v.severity)) {
-          const ai = await aiService.explain(v);
-          return { ...v, aiExplanation: ai.explanation, aiCodeFix: ai.codeFix };
-        }
-        return { ...v, aiExplanation: null, aiCodeFix: null };
-      }),
-    );
-    console.log(`[SCAN ${scanId}] AI enrichment finished in ${Date.now() - aiStart}ms`);
+    const enriched = await runWithLimit(allVulns, AI_CONCURRENCY, async (v) => {
+      if (['CRITICAL', 'HIGH', 'MEDIUM'].includes(v.severity)) {
+        const ai = await aiService.explain(v);
+        return { ...v, aiExplanation: ai.explanation, aiCodeFix: ai.codeFix };
+      }
+      return { ...v, aiExplanation: null as string | null, aiCodeFix: null as string | null };
+    });
+    console.log(`[SCAN ${scanId}] AI enrichment finished in ${Date.now() - aiStart}ms (concurrency=${AI_CONCURRENCY})`);
 
-    const finalVulns = enriched;
-
+    // Persistir
     await prisma.$transaction(async (tx) => {
       await tx.vulnerability.deleteMany({ where: { scanId } });
       await tx.vulnerability.createMany({
-        data: finalVulns.map((v, i) => ({
+        data: enriched.map((v, i) => ({
           scanId,
           title: v.title,
           severity: v.severity,
@@ -93,7 +169,7 @@ export async function scanProcessor(scanId: string, url: string, userId: string,
           solution: v.solution,
           aiExplanation: typeof v.aiExplanation === 'string' ? v.aiExplanation : v.aiExplanation ? JSON.stringify(v.aiExplanation) : null,
           aiCodeFix: typeof v.aiCodeFix === 'string' ? v.aiCodeFix : v.aiCodeFix ? JSON.stringify(v.aiCodeFix) : null,
-          isPublic: i < 2,
+          isPublic: i < 2, // Primeiras 2 (mais críticas) são públicas no preview
         })),
       });
       await tx.scan.update({
@@ -102,7 +178,7 @@ export async function scanProcessor(scanId: string, url: string, userId: string,
       });
     });
 
-    console.log(`[SCAN ${scanId}] COMPLETED in ${Date.now() - startTime}ms — score: ${score}, vulns: ${finalVulns.length}`);
+    console.log(`[SCAN ${scanId}] COMPLETED in ${Date.now() - startTime}ms — score: ${score}, vulns: ${enriched.length}`);
   } catch (err) {
     console.error(`[SCAN ${scanId}] FAILED in ${Date.now() - startTime}ms: ${err}`);
     await prisma.scan.update({
