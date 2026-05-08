@@ -55,6 +55,33 @@ function sortBySeverity<T extends { severity: string }>(vulns: T[]): T[] {
   return [...vulns].sort((a, b) => (SEVERITY_ORDER[a.severity] ?? 99) - (SEVERITY_ORDER[b.severity] ?? 99));
 }
 
+/**
+ * Seleciona quais vulnerabilidades aparecem no preview público (não-pago).
+ *
+ * Regra v3.1:
+ *   - Preview mostra apenas 1 MEDIUM + 1 LOW (quando disponíveis)
+ *   - MEDIUM só aparece se houver >= 2 MEDIUMs (garante que sempre exista MEDIUM pago)
+ *   - CRITICAL, HIGH e INFO NUNCA aparecem no preview (força upgrade)
+ *
+ * Retorna Set de índices (dos vulns já ordenados) que devem ser marcados isPublic=true.
+ */
+function pickPublicIndices<T extends { severity: string }>(vulns: T[]): Set<number> {
+  const publicIdx = new Set<number>();
+  const mediumCount = vulns.filter(v => v.severity === 'MEDIUM').length;
+
+  // 1 MEDIUM — só se houver >=2 MEDIUMs totais
+  if (mediumCount >= 2) {
+    const idx = vulns.findIndex(v => v.severity === 'MEDIUM');
+    if (idx !== -1) publicIdx.add(idx);
+  }
+
+  // 1 LOW — sempre que houver pelo menos 1
+  const lowIdx = vulns.findIndex(v => v.severity === 'LOW');
+  if (lowIdx !== -1) publicIdx.add(lowIdx);
+
+  return publicIdx;
+}
+
 /** Executa promises com concorrência limitada (semáforo simples). */
 async function runWithLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const results: R[] = new Array(items.length);
@@ -157,6 +184,10 @@ export async function scanProcessor(scanId: string, url: string, userId: string,
     });
     console.log(`[SCAN ${scanId}] AI enrichment finished in ${Date.now() - aiStart}ms (concurrency=${AI_CONCURRENCY})`);
 
+    // Seleciona quais vulns aparecem no preview público (1 MEDIUM + 1 LOW, ver pickPublicIndices)
+    const publicIndices = pickPublicIndices(enriched);
+    console.log(`[SCAN ${scanId}] Public preview indices: [${[...publicIndices].join(', ')}] (total=${enriched.length})`);
+
     // Persistir
     await prisma.$transaction(async (tx) => {
       await tx.vulnerability.deleteMany({ where: { scanId } });
@@ -169,7 +200,7 @@ export async function scanProcessor(scanId: string, url: string, userId: string,
           solution: v.solution,
           aiExplanation: typeof v.aiExplanation === 'string' ? v.aiExplanation : v.aiExplanation ? JSON.stringify(v.aiExplanation) : null,
           aiCodeFix: typeof v.aiCodeFix === 'string' ? v.aiCodeFix : v.aiCodeFix ? JSON.stringify(v.aiCodeFix) : null,
-          isPublic: i < 2, // Primeiras 2 (mais críticas) são públicas no preview
+          isPublic: publicIndices.has(i),
         })),
       });
       await tx.scan.update({
