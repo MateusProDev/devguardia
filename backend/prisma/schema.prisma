@@ -12,19 +12,24 @@ datasource db {
 }
 
 model User {
-  id              String         @id @default(cuid())
-  firebaseUid     String         @unique
-  email           String         @unique
+  id              String    @id @default(cuid())
+  firebaseUid     String    @unique
+  email           String    @unique
   displayName     String?
-  acceptedTerms   Boolean        @default(false)
+  acceptedTerms   Boolean   @default(false)
   acceptedTermsAt DateTime?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  scans           Scan[]
-  payments        Payment[]
-  subscription    Subscription?
-  scanConsents    ScanConsent[]
+  scans        Scan[]
+  payments     Payment[]
+  subscription Subscription?
+  scanConsents ScanConsent[]
+
+  // Marketplace
+  creatorProfile  CreatorProfile?
+  purchases       Purchase[]
+  reviewsAuthored Review[]
 
   @@index([firebaseUid])
   @@index([email])
@@ -50,16 +55,16 @@ enum SubscriptionPlan {
 }
 
 model Scan {
-  id          String        @id @default(cuid())
-  userId      String
-  url         String
-  status      ScanStatus    @default(PENDING)
-  score       Int?
-  isPremium   Boolean       @default(false)
-  intensity   ScanIntensity @default(BASIC)
-  errorMsg    String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id        String        @id @default(cuid())
+  userId    String
+  url       String
+  status    ScanStatus    @default(PENDING)
+  score     Int?
+  isPremium Boolean       @default(false)
+  intensity ScanIntensity @default(BASIC)
+  errorMsg  String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   vulnerabilities Vulnerability[]
@@ -79,16 +84,16 @@ enum Severity {
 }
 
 model Vulnerability {
-  id           String   @id @default(cuid())
-  scanId       String
-  title        String
-  severity     Severity
-  description  String
-  solution     String
+  id            String   @id @default(cuid())
+  scanId        String
+  title         String
+  severity      Severity
+  description   String
+  solution      String
   aiExplanation String?
-  aiCodeFix    String?
-  isPublic     Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  aiCodeFix     String?
+  isPublic      Boolean  @default(false)
+  createdAt     DateTime @default(now())
 
   scan Scan @relation(fields: [scanId], references: [id], onDelete: Cascade)
 
@@ -111,16 +116,16 @@ enum PaymentType {
 }
 
 model Payment {
-  id                  String        @id @default(cuid())
-  userId              String
-  scanId              String?
-  mercadoPagoId       String?       @unique
-  preferenceId        String?
-  status              PaymentStatus @default(PENDING)
-  type                PaymentType
-  amount              Int
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  id            String        @id @default(cuid())
+  userId        String
+  scanId        String?
+  mercadoPagoId String?       @unique
+  preferenceId  String?
+  status        PaymentStatus @default(PENDING)
+  type          PaymentType
+  amount        Int
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   scan Scan? @relation(fields: [scanId], references: [id])
@@ -143,14 +148,14 @@ model Subscription {
 }
 
 model ScanConsent {
-  id            String   @id @default(cuid())
-  userId        String
-  scanId        String   @unique
-  targetUrl     String
-  ipAddress     String?
-  userAgent     String?
-  consentText   String
-  acceptedAt    DateTime @default(now())
+  id          String   @id @default(cuid())
+  userId      String
+  scanId      String   @unique
+  targetUrl   String
+  ipAddress   String?
+  userAgent   String?
+  consentText String
+  acceptedAt  DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   scan Scan @relation(fields: [scanId], references: [id], onDelete: Cascade)
@@ -171,4 +176,279 @@ model PageView {
   @@index([path])
   @@index([createdAt])
   @@index([sessionId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  MARKETPLACE (non-custodial)
+//
+//  Pagamentos vão DIRETO do comprador para o criador (XMR ou PIX).
+//  Plataforma nunca toca em dinheiro — só intermedia informação.
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum CreatorStatus {
+  PENDING
+  APPROVED
+  BANNED
+}
+
+enum PixKeyType {
+  CPF
+  CNPJ
+  EMAIL
+  PHONE
+  RANDOM
+}
+
+model CreatorProfile {
+  id          String        @id @default(cuid())
+  userId      String        @unique
+  slug        String        @unique
+  displayName String
+  bio         String?       @db.Text
+  avatarUrl   String?
+  status      CreatorStatus @default(APPROVED)
+
+  // Monero config — opcional (criador habilita XMR se preencher)
+  // MVP: confirmação manual pelo vendedor. Futuro: viewKey opcional para auto-confirm.
+  moneroMainAddress       String?
+  moneroViewKey           String?  // futuro: para auto-confirmação. Não usado no MVP.
+
+  // PIX config — opcional (criador habilita PIX se preencher)
+  pixKey        String?
+  pixKeyType    PixKeyType?
+  pixHolderName String? // nome do beneficiário (mostrado ao comprador)
+  pixQrCodeUrl  String? // QR estático opcional
+
+  acceptedMarketplaceTerms   Boolean   @default(false)
+  acceptedMarketplaceTermsAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products      Product[]
+  contributions Contribution[]
+
+  @@index([status])
+}
+
+enum ProductType {
+  COURSE
+  EBOOK
+  MENTORSHIP
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum PaymentMethod {
+  XMR
+  PIX
+}
+
+model Product {
+  id               String      @id @default(cuid())
+  creatorId        String
+  type             ProductType
+  slug             String      @unique
+  title            String
+  shortDescription String?
+  description      String      @db.Text
+  coverImageUrl    String?
+
+  // Preços — pelo menos um deve estar preenchido conforme acceptedMethods
+  priceXmrPiconero BigInt? // 1 XMR = 1e12 piconero
+  pricePixBrlCents Int? // valor em centavos de BRL
+
+  // Métodos aceitos — derivado de creator config + preços setados
+  acceptsXmr Boolean @default(false)
+  acceptsPix Boolean @default(false)
+
+  status      ProductStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  creator           CreatorProfile     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  modules           Module[]
+  ebookFile         EbookFile?
+  mentorshipDetails MentorshipDetails?
+  purchases         Purchase[]
+  reviews           Review[]
+
+  @@index([creatorId])
+  @@index([status, publishedAt])
+  @@index([type, status])
+}
+
+model Module {
+  id        String   @id @default(cuid())
+  productId String
+  title     String
+  position  Int
+  createdAt DateTime @default(now())
+
+  product Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  lessons Lesson[]
+
+  @@index([productId, position])
+}
+
+enum LessonType {
+  VIDEO
+  TEXT
+  PDF
+}
+
+model Lesson {
+  id          String     @id @default(cuid())
+  moduleId    String
+  title       String
+  type        LessonType
+  position    Int
+  durationSec Int?
+  content     String?    @db.Text // markdown se TEXT
+  storageKey  String? // chave no R2 se VIDEO/PDF
+  isPreview   Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+
+  module Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@index([moduleId, position])
+}
+
+model EbookFile {
+  id         String @id @default(cuid())
+  productId  String @unique
+  storageKey String
+  fileName   String
+  fileSize   Int
+  pageCount  Int?
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model MentorshipDetails {
+  id                     String  @id @default(cuid())
+  productId              String  @unique
+  durationMin            Int
+  format                 String // "video_call", "chat", "presencial", etc.
+  schedulingInstructions String? @db.Text
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+enum PurchaseStatus {
+  AWAITING_PAYMENT // criada, esperando pagamento
+  PAYMENT_CLAIMED // PIX: comprador clamou "paguei" / XMR: tx vista mas não confirmada
+  CONFIRMED // acesso liberado
+  EXPIRED // tempo esgotado sem pagamento
+  CANCELLED // cancelada manualmente
+  DISPUTED // disputa aberta (futuro)
+}
+
+model Purchase {
+  id        String         @id @default(cuid())
+  userId    String // comprador
+  productId String
+  method    PaymentMethod
+  status    PurchaseStatus @default(AWAITING_PAYMENT)
+
+  // Snapshot do preço no momento da compra
+  amountXmrPiconero BigInt?
+  amountPixBrlCents Int?
+
+  // Monero-specific
+  moneroSubaddress      String? @unique
+  moneroSubaddressIndex Int?
+  moneroTxHash          String?
+  moneroConfirmations   Int     @default(0)
+  moneroAmountReceived  BigInt  @default(0)
+
+  // PIX-specific
+  pixClaimedAt   DateTime? // quando comprador clamou "paguei"
+  pixConfirmedAt DateTime? // quando criador confirmou
+  pixProofUrl    String? // screenshot/recibo opcional
+  pixBuyerNote   String?   @db.Text // mensagem do comprador
+
+  // Timestamps
+  expiresAt   DateTime
+  paidAt      DateTime? // qualquer status >= PAYMENT_CLAIMED
+  confirmedAt DateTime? // CONFIRMED
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([userId, status])
+  @@index([productId])
+  @@index([status, expiresAt])
+}
+
+// Contribuição mensal voluntária do criador para a plataforma.
+// Ajuda a manter o serviço — não é obrigatória, mas dá badge de "Supporter".
+enum ContributionTier {
+  TIER_10 // R$ 10 / mês
+  TIER_20 // R$ 20
+  TIER_30 // R$ 30
+  TIER_50 // R$ 50
+}
+
+enum ContributionStatus {
+  PENDING // criador escolheu tier, esperando confirmação de pagamento
+  ACTIVE // pago, válido até periodEnd
+  EXPIRED // periodEnd passou sem renovação
+  CANCELLED
+}
+
+model Contribution {
+  id                String             @id @default(cuid())
+  creatorId         String
+  tier              ContributionTier
+  method            PaymentMethod
+  amountBrlCents    Int? // se PIX
+  amountXmrPiconero BigInt? // se XMR
+  status            ContributionStatus @default(PENDING)
+
+  // XMR auto-confirmação
+  moneroSubaddress      String? @unique
+  moneroSubaddressIndex Int?
+  moneroTxHash          String?
+  moneroConfirmations   Int     @default(0)
+
+  // PIX manual
+  pixClaimedAt   DateTime?
+  pixConfirmedAt DateTime? // confirmado pelo admin (você)
+  pixProofUrl    String?
+  adminNote      String?   @db.Text
+
+  periodStart DateTime
+  periodEnd   DateTime // periodStart + 30 dias
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  creator CreatorProfile @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([creatorId, status])
+  @@index([status, periodEnd])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  userId    String
+  rating    Int // 1-5
+  comment   String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId])
+  @@index([productId])
 }

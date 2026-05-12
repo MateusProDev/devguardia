@@ -161,6 +161,12 @@ export default function DashboardPage() {
             </span>
           </div>
           <div className="flex items-center gap-3 min-w-0">
+            <Link href="/marketplace" className="text-gray-600 hover:text-green-400 text-xs font-mono transition-colors hidden sm:block">
+              [MARKETPLACE]
+            </Link>
+            <Link href="/dashboard/creator" className="text-gray-600 hover:text-green-400 text-xs font-mono transition-colors hidden sm:block">
+              [VENDER]
+            </Link>
             <span className="text-gray-600 text-xs truncate hidden sm:block font-mono">{user?.email}</span>
             <button onClick={handleSignOut} className="flex items-center gap-2 text-gray-600 hover:text-red-400 text-xs transition-colors flex-shrink-0 font-mono">
               <LogOut className="w-3.5 h-3.5" />

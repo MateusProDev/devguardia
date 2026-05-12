@@ -15,6 +15,8 @@ import { VulnerabilitiesModule } from './modules/vulnerabilities/vulnerabilities
 import { AdminModule } from './modules/admin/admin.module';
 import { HealthModule } from './modules/health/health.module';
 import { CleanupModule } from './modules/cleanup/cleanup.module';
+import { MarketplaceModule } from './modules/marketplace/marketplace.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 @Module({
   imports: [
@@ -36,6 +38,8 @@ import { CleanupModule } from './modules/cleanup/cleanup.module';
     AdminModule,
     HealthModule,
     CleanupModule,
+    MarketplaceModule,
+    UploadModule,
   ],
   providers: [
     {
