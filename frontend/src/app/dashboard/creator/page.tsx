@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -24,10 +24,8 @@ const TABS = [
   { id: 'contribute', label: 'CONTRIBUIR', icon: Heart },
 ];
 
-export default function CreatorDashboard() {
+function CreatorDashboardPage({ activeTab }: { activeTab: string }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const activeTab = searchParams.get('tab') ?? 'products';
 
   const [user, setUser] = useState<FBUser | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -164,6 +162,27 @@ export default function CreatorDashboard() {
         )}
       </div>
     </div>
+  );
+}
+
+function CreatorDashboardInner() {
+  const searchParams = useSearchParams();
+  const activeTab = searchParams.get('tab') ?? 'products';
+  return <CreatorDashboardPage activeTab={activeTab} />;
+}
+
+export default function CreatorDashboard() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black matrix-bg flex items-center justify-center">
+        <div className="flex items-center gap-3 text-green-500 font-mono text-sm">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span>INICIALIZANDO<span className="animate-blink">_</span></span>
+        </div>
+      </div>
+    }>
+      <CreatorDashboardInner />
+    </Suspense>
   );
 }
 
